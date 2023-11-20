@@ -1,0 +1,6 @@
+.DS_Store
+**/debug.out.DSYM
+**/*.out
+**/leaks_result
+**/*.o
+**/*.d
