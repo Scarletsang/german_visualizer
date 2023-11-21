@@ -6,6 +6,9 @@
 
 #include "Types.hpp"
 
+/**
+ * @brief This represents an object in the markdown document.
+*/
 class MarkdownObject
 {
   public:
@@ -14,6 +17,9 @@ class MarkdownObject
     MarkdownObject& operator=(const MarkdownObject& other) = delete;
     virtual ~MarkdownObject();
 
+    /**
+     * @brief When accesssing an object, you can use a perspective to view it
+    */
     template <typename View_, typename Object>
     class Perspective
     {
@@ -29,6 +35,9 @@ class MarkdownObject
         virtual View_ apply(const Object& object) const;
     };
 
+    /**
+     * @brief A view is a way to access an object
+    */
     class View
     {
       public:
@@ -41,6 +50,9 @@ class MarkdownObject
         MarkdownObject& object_;
     };
 
+    /**
+     * @brief This method applies a perspective to this object and returns a View.
+    */
     template <typename T>
     typename T::View        view(T& perspective) const;
 
