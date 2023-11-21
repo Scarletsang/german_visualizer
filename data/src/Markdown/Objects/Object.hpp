@@ -18,7 +18,7 @@ class MarkdownObject
     virtual ~MarkdownObject();
 
     /**
-     * @brief When accesssing an object, you can use a perspective to view it
+     * @brief To accesssing an object, you have to use a perspective to view it
     */
     template <typename View_, typename Object>
     class Perspective
@@ -29,6 +29,7 @@ class MarkdownObject
         Perspective& operator=(const Perspective& other) = delete;
         virtual ~Perspective();
 
+        // Each perspective correspond to a view that it will create
         friend class View_;
         using View = View_;
 
@@ -36,7 +37,7 @@ class MarkdownObject
     };
 
     /**
-     * @brief A view is a way to access an object
+     * @brief A view is a way to see an object
     */
     class View
     {
