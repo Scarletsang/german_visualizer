@@ -50,11 +50,11 @@ std::shared_ptr<MarkdownObject> Markdown::remove_object(std::weak_ptr<MarkdownOb
 {
   Hash  hash = std::hash<std::shared_ptr<MarkdownObject> >()(object.lock());
 
-  if (this->objects_.find(hash) != this->objects_.end())
+  if (this->compose_objects_.find(hash) != this->compose_objects_.end())
   {
-    std::shared_ptr<MarkdownObject>  object = this->objects_[hash];
+    std::shared_ptr<MarkdownObject>  object = this->compose_objects_[hash];
 
-    this->objects_.erase(hash);
+    this->compose_objects_.erase(hash);
     return object;
   }
   return nullptr;
@@ -62,7 +62,7 @@ std::shared_ptr<MarkdownObject> Markdown::remove_object(std::weak_ptr<MarkdownOb
 
 const Markdown::Objects&  Markdown::get_objects() const
 {
-  return this->objects_;
+  return this->compose_objects_;
 }
 
 template <typename T>
@@ -70,8 +70,8 @@ std::weak_ptr<T>   Markdown::add(std::shared_ptr<T> object)
 {
   Hash  hash = std::hash<std::shared_ptr<T> >()(object);
 
-  if (this->objects_.find(hash) == this->objects_.end())
-    this->objects_[hash] = object;
+  if (this->compose_objects_.find(hash) == this->compose_objects_.end())
+    this->compose_objects_[hash] = object;
   return object;
 }
 

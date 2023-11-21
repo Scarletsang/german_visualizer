@@ -18,16 +18,19 @@ class MarkdownParser : public libcpp::Parser
 {
   public:
     typedef libcpp::ErrorTrace<Error> ErrorTrace;
-    typedef libcpp::Result<Markdown&, ErrorTrace> ParseResult;
+    typedef libcpp::Result<Markdown*, ErrorTrace> ParseResult;
 
     MarkdownParser(std::istream& input);
     ~MarkdownParser();
 
     ParseResult parse();
-    
-
+  
   private:
-    Markdown  objects_;
+    ParseResult parseBlock(Markdown* markdown);
+    ParseResult parseHeader(Markdown* markdown);
+    ParseResult parseParagraph(Markdown* markdown);
+    ParseResult parseLine(Markdown* markdown);
+    ParseResult parseWord(Markdown* markdown);
 };
 
 struct Json {};

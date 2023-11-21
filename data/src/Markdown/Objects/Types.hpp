@@ -4,8 +4,11 @@
 enum  MarkdownType
 {
   kInvalid = -1,
+  // Concret types:
   kCharacter,
   kWord,
+  kNumber,
+  // Compose types:
   kTitle,
   kWordLinked,
   kTitleLinked,

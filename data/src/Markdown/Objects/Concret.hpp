@@ -7,48 +7,81 @@
 #include "Types.hpp"
 #include "Compose.hpp"
 
-class Character : public MarkdownObject
+template <typename T>
+class ConcretObject : public MarkdownObject
 {
   public:
-    Character();
-    Character(const char character);
-    Character(const Character& other);
-    virtual ~Character();
+    ConcretObject();
+    ConcretObject(const T& object);
+    ConcretObject(const ConcretObject& other);
+    virtual ~ConcretObject();
 
-    virtual MarkdownType  get_type() const;
+    class View : public MarkdownObject::View
+    {
+      public:
+        View(ConcretObject& object);
+        virtual ~View();
+        T&  data();
+    };
+
+    class Perspective : public MarkdownObject::Perspective<View, ConcretObject>
+    {
+      public:
+        virtual ~Perspective();        
+        virtual View apply(ConcretObject& object) const;
+    };
+
+    virtual MarkdownType    get_type() const override;
 
   protected:
-    char character_;
+    T             data_;
+    MarkdownType  type_;
 };
 
-class Word : public MarkdownObject
+/////////////////////////////////////////////////////
+////////////   template implementation   ////////////
+/////////////////////////////////////////////////////
+
+template <typename T>
+ConcretObject<T>::ConcretObject() : MarkdownObject() {}
+
+template <typename T>
+ConcretObject<T>::ConcretObject(const T& object)
+  : MarkdownObject(), data_(object) {}
+
+template <typename T>
+ConcretObject<T>::ConcretObject(const ConcretObject& other)
+  : MarkdownObject(other), data_(other.data_) {}
+
+template <typename T>
+ConcretObject<T>::~ConcretObject() {}
+
+template <typename T>
+ConcretObject<T>::Perspective::~Perspective() {}
+
+template <typename T>
+ConcretObject<T>::View ConcretObject<T>::Perspective::apply(ConcretObject<T>& object) const
 {
-  public:
-    Word();
-    Word(const std::string& word);
-    Word(const Word& other);
-    virtual ~Word();
+  return object.data_;
+}
 
-    virtual MarkdownType  get_type() const;
-
-  protected:
-    std::string word_;
-};
-
-class Title : public MarkdownObject
+template <typename T>
+MarkdownType ConcretObject<T>::get_type() const
 {
-  public:
-    Title();
-    Title(const std::string& word);
-    Title(const std::string& word, int level);
-    Title(const Title& other);
-    virtual ~Title();
+  return type_;
+}
 
-    virtual MarkdownType  get_type() const;
+template <typename T>
+ConcretObject<T>::View::View(ConcretObject<T>& object)
+  : MarkdownObject::View(object) {}
 
-  protected:
-    std::string title_;
-    int         level_;
-};
+template <typename T>
+ConcretObject<T>::View::~View() {}
+
+template <typename T>
+T& ConcretObject<T>::View::data()
+{
+  return object_.data_;
+}
 
 #endif

@@ -70,3 +70,20 @@ void  MarkdownLinks::set_target(std::weak_ptr<MarkdownObject> target)
 {
   target_ = target;
 }
+
+void  MarkdownLinks::add(std::weak_ptr<MarkdownObject> object)
+{
+  std::shared_ptr<MarkdownObject> shared = object.lock();
+  if (!shared)
+    return ;
+  else if (shared.get() == this)
+    return ;
+  else
+    objects_.push_back(object);
+}
+
+void  MarkdownLinks::add(Objects& objects)
+{
+  for (std::weak_ptr<MarkdownObject>& object : objects)
+    add(object);
+}
