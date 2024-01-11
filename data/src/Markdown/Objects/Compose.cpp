@@ -20,14 +20,17 @@ MarkdownType MarkdownCompose::get_type() const
   return type_;
 }
 
-const MarkdownCompose::Objects& MarkdownCompose::get_objects() const
-{
-  return objects_;
-}
-
 void  MarkdownCompose::set_type(MarkdownType type)
 {
   type_ = type;
+}
+
+MarkdownCompose::View::View(MarkdownCompose& data)
+  : MarkdownObject::View(data) {}
+
+const MarkdownCompose::Objects& MarkdownCompose::get_objects() const
+{
+  return objects_;
 }
 
 void  MarkdownCompose::add(std::weak_ptr<MarkdownObject> object)

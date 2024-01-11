@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Object.hpp"
+#include "Perspective.hpp"
 #include "Types.hpp"
 #include "Compose.hpp"
 
@@ -16,22 +17,24 @@ class ConcretObject : public MarkdownObject
     ConcretObject(const ConcretObject& other);
     virtual ~ConcretObject();
 
-    class View : public MarkdownObject::View
+    virtual MarkdownType    get_type() const override;
+
+    class View : public ::View
     {
       public:
         View(ConcretObject& object);
         virtual ~View();
-        T&  data();
+        virtual T&  data();
+      
+      private:
+        ConcretObject& object_;
     };
 
-    class Perspective : public MarkdownObject::Perspective<View, ConcretObject>
+    class Perspective : public ::Perspective<ConcretObject, View>
     {
       public:
-        virtual ~Perspective();        
-        virtual View apply(ConcretObject& object) const;
+        virtual ~Perspective();
     };
-
-    virtual MarkdownType    get_type() const override;
 
   protected:
     T             data_;
@@ -60,12 +63,6 @@ template <typename T>
 ConcretObject<T>::Perspective::~Perspective() {}
 
 template <typename T>
-ConcretObject<T>::View ConcretObject<T>::Perspective::apply(ConcretObject<T>& object) const
-{
-  return object.data_;
-}
-
-template <typename T>
 MarkdownType ConcretObject<T>::get_type() const
 {
   return type_;
@@ -73,7 +70,7 @@ MarkdownType ConcretObject<T>::get_type() const
 
 template <typename T>
 ConcretObject<T>::View::View(ConcretObject<T>& object)
-  : MarkdownObject::View(object) {}
+  : ::Perspective<ConcretObject>::View(object) {}
 
 template <typename T>
 ConcretObject<T>::View::~View() {}
