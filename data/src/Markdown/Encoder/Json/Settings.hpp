@@ -1,14 +1,10 @@
 #pragma once
 
-#include <iostream>
-
-#include "libcpp/Maybe.hpp"
-
 class JsonEncoderSettings
 {
   public:
     JsonEncoderSettings(\
-      int level = 0, int indentation = 2, libcpp::Maybe<char> indentation_character = ' ');
+      int level = 0, int indentation = 2, char indentation_character = ' ');
     JsonEncoderSettings(const JsonEncoderSettings& object);
     virtual ~JsonEncoderSettings();
 
@@ -16,18 +12,20 @@ class JsonEncoderSettings
 
     int level() const;
     int indentation() const;
-    libcpp::Maybe<char> indentation_character() const;
+    char indentation_character() const;
 
     bool  is_compact() const;
 
+    void  toggle_compact();
     void  set_level(int level);
     void  increase_level();
     void  decrease_level();
     void  set_indentation(int indentation);
-    void  set_indentation_character(libcpp::Maybe<char> indentation_character);
+    void  set_indentation_character(char indentation_character);
 
   private:
     int level_;
     int indentation_;
-    libcpp::Maybe<char> indentation_character_;
+    char  indentation_character_;
+    bool  is_compact_;
 };

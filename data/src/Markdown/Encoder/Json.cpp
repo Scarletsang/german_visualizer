@@ -126,6 +126,7 @@ int JsonEncoder::encode(const Section& section)
     write_newline_indent();
     write_key("title");
     section.title()->encode(*this);
+    output_ << ',';
     write_newline_indent();
     write_key("data");
     encode(section.data());
@@ -166,7 +167,7 @@ void  JsonEncoder::write_indent()
   {
     for (int j = 0; j < settings_.indentation(); ++j)
     {
-      output_ << settings_.indentation_character().value();
+      output_ << settings_.indentation_character();
     }
   }
 }

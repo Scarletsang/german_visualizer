@@ -85,7 +85,9 @@ int main()
   document->add_element(CreateRandomSection(1, 3));
   // document->add_element(CreateRandomSentence(3));
   document->add_element(CreateRandomSection(2, 1));
-  JsonEncoder encoder(std::cout);
+  JsonEncoderSettings settings;
+  settings.toggle_compact();
+  JsonEncoder encoder(std::cout, settings);
   encoder.encode(*document);
   std::cout << std::endl;
   return EXIT_SUCCESS;
