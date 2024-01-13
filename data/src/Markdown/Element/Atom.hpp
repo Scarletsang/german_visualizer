@@ -2,9 +2,8 @@
 
 #include <string>
 
-#include "Element.hpp"
 #include "Encoder.hpp"
-#include "Element/Atom/Number.hpp"
+#include "Element/Element.hpp"
 
 template <typename T>
 class Atom : public MarkdownElement
@@ -17,10 +16,11 @@ class Atom : public MarkdownElement
 
     Atom& operator=(const Atom& other);
 
-    virtual int encode(Encoder& encoder) const;
-    virtual bool  is_atom() const;
+    virtual int encode(Encoder& encoder) const override;
+    virtual bool  is_atom() const override;
 
     T& data();
+    const T& data() const;
 
   protected:
     T data_;
@@ -66,6 +66,8 @@ T& Atom<T>::data()
   return data_;
 }
 
-using Word = Atom<std::string>;
-using Character = Atom<char>;
-using Number = Atom<atom::Number>;
+template <typename T>
+const T& Atom<T>::data() const
+{
+  return data_;
+}

@@ -3,10 +3,10 @@
 #include <vector>
 #include <memory>
 
-#include "Element.hpp"
 #include "Encoder.hpp"
-#include "Collection.hpp"
-#include "Title.hpp"
+#include "Element/Element.hpp"
+#include "Element/Collection.hpp"
+#include "Element/Title.hpp"
 
 class Section : public Collection<MarkdownElement>
 {
@@ -18,8 +18,8 @@ class Section : public Collection<MarkdownElement>
 
     Section& operator=(const Section& other);
 
-    virtual int encode(Encoder& encoder) const;
-    virtual bool  is_atom() const;
+    virtual int encode(Encoder& encoder) const override;
+    virtual bool  is_atom() const override;
 
     void  set_title(std::shared_ptr<Title> title);
 

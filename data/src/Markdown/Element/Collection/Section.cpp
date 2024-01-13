@@ -3,10 +3,10 @@
 #include <vector>
 #include <memory>
 
-#include "Element.hpp"
 #include "Encoder.hpp"
-#include "Collection.hpp"
-#include "Title.hpp"
+#include "Element/Element.hpp"
+#include "Element/Collection.hpp"
+#include "Element/Title.hpp"
 
 Section::Section()
   : Collection<MarkdownElement>(), title_() {}

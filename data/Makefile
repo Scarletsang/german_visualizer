@@ -11,7 +11,7 @@ ifdef FSANITIZE
 	CXXFLAGS+= -g3 -fsanitize=address -DDEBUG=1
 	LDFLAGS+= -g3 -fsanitize=address
 endif
-INCLUDE_DIR:= .
+INCLUDE_DIR:= src/Markdown libcpp/include
 
 ###################################
 ######     Source files     #######
@@ -21,8 +21,21 @@ INCLUDE_DIR:= .
 # contatenate them in the SRC variable like this:
 
 MAIN_SRC:= \
+	Markdown/Elements.cpp \
 	main.cpp
-SRC:= $(MAIN_SRC)
+ELEMENT_SRC:= \
+	Markdown/Element/Atom/Character.cpp \
+	Markdown/Element/Atom/Number.cpp \
+	Markdown/Element/Atom/Word.cpp \
+	Markdown/Element/Collection/Paragraph.cpp \
+	Markdown/Element/Collection/Section.cpp \
+	Markdown/Element/Collection/Document.cpp \
+	Markdown/Element/Collection/Sentence.cpp \
+	Markdown/Element/Title.cpp
+ENCODER_SRC:= \
+	Markdown/Encoder/Json/Settings.cpp \
+	Markdown/Encoder/Json.cpp
+SRC:= $(MAIN_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
 
 ####################################
 ######     Library files     #######

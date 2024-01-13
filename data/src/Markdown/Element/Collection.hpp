@@ -3,8 +3,8 @@
 #include <vector>
 #include <memory>
 
-#include "Element.hpp"
 #include "Encoder.hpp"
+#include "Element/Element.hpp"
 
 template <typename T>
 class Collection : public MarkdownElement
@@ -17,8 +17,8 @@ class Collection : public MarkdownElement
 
     Collection& operator=(const Collection& other);
 
-    virtual int encode(Encoder& encoder) const;
-    virtual bool  is_atom() const;
+    virtual int encode(Encoder& encoder) const override;
+    virtual bool  is_atom() const override;
 
     void  add_element(element line);
 
@@ -80,6 +80,3 @@ std::vector<typename Collection<T>::element>& Collection<T>::data()
 {
   return data_;
 }
-
-using Paragraph = Collection<Sentence>;
-using Document = Collection<MarkdownElement>;

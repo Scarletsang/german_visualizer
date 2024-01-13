@@ -2,16 +2,16 @@
 
 #include <memory>
 
-#include "Element.hpp"
 #include "Encoder.hpp"
-#include "Collection.hpp"
+#include "Element/Element.hpp"
+#include "Element/Collection.hpp"
 
 Title::Title() : level_(), data_() {}
 
 Title::Title(int level) : level_(level), data_() {}
 
-Title::Title(int level, std::shared_ptr<Paragraph> line)
-  : level_(level), data_(line) {}
+Title::Title(int level, std::shared_ptr<Paragraph> paragraph)
+  : level_(level), data_(paragraph) {}
 
 Title::Title(const Title& object)
   : level_(object.level_), data_(object.data_) {}

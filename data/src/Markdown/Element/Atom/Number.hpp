@@ -1,6 +1,10 @@
 #pragma once
 
-#include "Maybe.hpp"
+#include <iostream>
+
+#include "libcpp/Maybe.hpp"
+#include "Element/Atom.hpp"
+#include "Encoder.hpp"
 
 namespace atom
 {
@@ -28,8 +32,25 @@ namespace atom
       libcpp::Maybe<int>  get_integer() const;
       libcpp::Maybe<float>  get_float() const;
 
+      friend std::ostream& operator<<(std::ostream& os, const Number& number);
     protected:
       union data data_;
       enum type type_;
   };
+
 }; // namespace atom
+
+class Number : public Atom<atom::Number>
+{
+  public:
+    Number();
+    Number(int number);
+    Number(float number);
+    Number(const Number& object);
+    virtual ~Number();
+
+    Number& operator=(const Number& other);
+
+    virtual int encode(Encoder& encoder) const override;
+    virtual bool  is_atom() const override;
+};

@@ -1,6 +1,6 @@
 #pragma once
 
-class Encoder;
+#include "Encoder.hpp"
 
 /**
  * @brief This represents an object in the markdown document.
@@ -8,7 +8,7 @@ class Encoder;
 class MarkdownElement
 {
   public:
-    virtual ~MarkdownElement() = 0;
+    virtual ~MarkdownElement() {};
 
     virtual int encode(Encoder& encoder) const = 0;
     virtual bool  is_atom() const = 0;

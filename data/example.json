@@ -1,0 +1,37 @@
+[
+  {
+    "type": "section",
+    "title": {
+      "type": "title",
+      "level": 1,
+      "data": [
+        {
+          "type": "word",
+          "data": "Chapter"
+        },
+        {
+          "type": "number",
+          "data": 19
+        }
+      ]
+    },
+    "data": [
+      {
+        "type": "section",
+        "title": {
+          "type": "title",
+          "level": 3,
+          "data": [
+            {
+              "type": "word",
+              "data": "riesig"
+            }
+          ]
+        },
+        "data": [
+
+        ]
+      }
+    ]
+  }
+]

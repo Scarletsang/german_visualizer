@@ -1,38 +1,38 @@
-#ifndef MARKDOWN_PARSER_HPP
-#define MARKDOWN_PARSER_HPP
+// #ifndef MARKDOWN_PARSER_HPP
+// #define MARKDOWN_PARSER_HPP
 
-#include <string>
-#include <vector>
+// #include <string>
+// #include <vector>
 
-#include "Markdown.hpp"
-#include "libcpp/Result.hpp"
-#include "libcpp/Parser.hpp"
-#include "libcpp/parser/ErrorTrace.hpp"
+// #include "Markdown.hpp"
+// #include "libcpp/Result.hpp"
+// #include "libcpp/Parser.hpp"
+// #include "libcpp/parser/ErrorTrace.hpp"
 
-class Error
-{
+// class Error
+// {
 
-};
+// };
 
-class MarkdownParser : public libcpp::Parser
-{
-  public:
-    typedef libcpp::ErrorTrace<Error> ErrorTrace;
-    typedef libcpp::Result<Markdown*, ErrorTrace> ParseResult;
+// class MarkdownParser : public libcpp::Parser
+// {
+//   public:
+//     typedef libcpp::ErrorTrace<Error> ErrorTrace;
+//     typedef libcpp::Result<Markdown*, ErrorTrace> ParseResult;
 
-    MarkdownParser(std::istream& input);
-    ~MarkdownParser();
+//     MarkdownParser(std::istream& input);
+//     ~MarkdownParser();
 
-    ParseResult parse();
+//     ParseResult parse();
   
-  private:
-    ParseResult parseBlock(Markdown* markdown);
-    ParseResult parseHeader(Markdown* markdown);
-    ParseResult parseParagraph(Markdown* markdown);
-    ParseResult parseLine(Markdown* markdown);
-    ParseResult parseWord(Markdown* markdown);
-};
+//   private:
+//     ParseResult parseBlock(Markdown* markdown);
+//     ParseResult parseHeader(Markdown* markdown);
+//     ParseResult parseParagraph(Markdown* markdown);
+//     ParseResult parseLine(Markdown* markdown);
+//     ParseResult parseWord(Markdown* markdown);
+// };
 
-struct Json {};
+// struct Json {};
 
-#endif
+// #endif
