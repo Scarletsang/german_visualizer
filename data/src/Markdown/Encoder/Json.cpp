@@ -90,8 +90,7 @@ int JsonEncoder::encode(const Title& title)
     write_newline_indent();
     write_pair("level", title.level(), true);
     write_newline_indent();
-    write_key("data");
-    title.data()->encode(*this);
+    write_pair("data", title.data(), false);
     settings_.decrease_level();
   }
   write_newline_indent();
@@ -124,9 +123,7 @@ int JsonEncoder::encode(const Section& section)
     write_newline_indent();
     write_pair("type", "section", true);
     write_newline_indent();
-    write_key("title");
-    section.title()->encode(*this);
-    output_ << ',';
+    write_pair("title", section.title(), true);
     write_newline_indent();
     write_key("data");
     encode(section.data());
@@ -227,6 +224,16 @@ void  JsonEncoder::write_pair(const std::string& key,
 {
   write_key(key);
   output_ << value;
+  if (comma)
+    output_ << ',';
+}
+
+void  JsonEncoder::write_pair(const std::string& key,
+                              const std::shared_ptr<MarkdownElement>& value,
+                              bool comma)
+{
+  write_key(key);
+  value->encode(*this);
   if (comma)
     output_ << ',';
 }

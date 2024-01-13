@@ -60,6 +60,9 @@ class JsonEncoder : public Encoder
     virtual void  write_pair(const std::string& key, 
                              int value,
                              bool comma);
+    virtual void  write_pair(const std::string& key,
+                             const std::shared_ptr<MarkdownElement>& value,
+                             bool comma);
 
     virtual void  write_sanitize(const std::string& string);
     virtual void  write_sanitize(char string);
