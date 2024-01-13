@@ -28,6 +28,6 @@ class Sentence : public MarkdownElement
     const std::vector<element>& data() const;
     std::vector<element>& data();
 
-  private:
+  protected:
     std::vector<element> data_;
 };

@@ -5,14 +5,14 @@
 
 #include "Element.hpp"
 #include "Encoder.hpp"
-#include "Line.hpp"
+#include "Collection.hpp"
 
 class Title
 {
   public:
     Title();
     Title(int level);
-    Title(int level, std::shared_ptr<Line> line);
+    Title(int level, std::shared_ptr<Paragraph> line);
     Title(const Title& object);
     virtual ~Title();
 
@@ -22,12 +22,12 @@ class Title
     virtual bool  is_atom() const;
 
     int level() const;
-    std::shared_ptr<Line> line() const;
+    std::shared_ptr<Paragraph> data() const;
 
     void  set_level(int level);
-    void  set_line(std::shared_ptr<Line> line);
+    void  set_data(std::shared_ptr<Paragraph> line);
 
-  private:
+  protected:
     int level_;
-    std::shared_ptr<Line> line_;
+    std::shared_ptr<Paragraph> data_;
 };

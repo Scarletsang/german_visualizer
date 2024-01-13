@@ -28,7 +28,7 @@ namespace atom
       libcpp::Maybe<int>  get_integer() const;
       libcpp::Maybe<float>  get_float() const;
 
-    private:
+    protected:
       union data data_;
       enum type type_;
   };

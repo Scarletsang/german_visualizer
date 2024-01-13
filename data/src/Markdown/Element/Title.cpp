@@ -1,14 +1,21 @@
 #include "Title.hpp"
 
-Title::Title() : level_(), line_() {}
+#include <iostream>
+#include <memory>
 
-Title::Title(int level) : level_(level), line_() {}
+#include "Element.hpp"
+#include "Encoder.hpp"
+#include "Collection.hpp"
 
-Title::Title(int level, std::shared_ptr<Line> line)
-  : level_(level), line_(line) {}
+Title::Title() : level_(), data_() {}
+
+Title::Title(int level) : level_(level), data_() {}
+
+Title::Title(int level, std::shared_ptr<Paragraph> line)
+  : level_(level), data_(line) {}
 
 Title::Title(const Title& object)
-  : level_(object.level_), line_(object.line_) {}
+  : level_(object.level_), data_(object.data_) {}
 
 Title::~Title() {}
 
@@ -17,7 +24,7 @@ Title& Title::operator=(const Title& other)
   if (this != &other)
   {
     level_ = other.level_;
-    line_ = other.line_;
+    data_ = other.data_;
   }
   return *this;
 }
@@ -37,9 +44,9 @@ int Title::level() const
   return level_;
 }
 
-std::shared_ptr<Line> Title::line() const
+std::shared_ptr<Paragraph> Title::data() const
 {
-  return line_;
+  return data_;
 }
 
 void Title::set_level(int level)
@@ -47,7 +54,7 @@ void Title::set_level(int level)
   level_ = level;
 }
 
-void Title::set_line(std::shared_ptr<Line> line)
+void Title::set_data(std::shared_ptr<Paragraph> paragraph)
 {
-  line_ = line;
+  data_ = paragraph;
 }

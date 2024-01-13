@@ -23,7 +23,7 @@ class Atom : public MarkdownElement
 
     T& data();
 
-  private:
+  protected:
     T data_;
 };
 
