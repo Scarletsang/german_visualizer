@@ -10,10 +10,16 @@ namespace atom
     : data_(), type_(kInteger) {}
 
   Number::Number(int number)
-    : data_({ .integer = number }), type_(kInteger) {}
+    : type_(kInteger)
+  {
+    this->data_.integer = number;
+  }
 
   Number::Number(float number)
-    : data_({ .floats = number }), type_(kFloat) {}
+    : type_(kFloat)
+  {
+    this->data_.floats = number;
+  }
 
   Number::Number(const Number& object)
     : data_(object.data_), type_(object.type_) {}
