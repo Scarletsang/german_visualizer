@@ -1,7 +1,5 @@
 #pragma once
 
-#include <iostream>
-
 class Encoder;
 
 /**
@@ -12,6 +10,6 @@ class MarkdownElement
   public:
     virtual ~MarkdownElement() = 0;
 
-    virtual int encode(Encoder& encoder, std::istream& input) const = 0;
+    virtual int encode(Encoder& encoder) const = 0;
     virtual bool  is_atom() const = 0;
 };

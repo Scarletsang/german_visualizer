@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <memory>
 
 #include "Element.hpp"
@@ -18,7 +17,7 @@ class Title
 
     Title& operator=(const Title& other);
 
-    virtual int encode(Encoder& encoder, std::istream& input) const;
+    virtual int encode(Encoder& encoder) const;
     virtual bool  is_atom() const;
 
     int level() const;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 
 #include "Element.hpp"
@@ -18,7 +17,7 @@ class Atom : public MarkdownElement
 
     Atom& operator=(const Atom& other);
 
-    virtual int encode(Encoder& encoder, std::istream& input) const;
+    virtual int encode(Encoder& encoder) const;
     virtual bool  is_atom() const;
 
     T& data();
@@ -50,9 +49,9 @@ Atom<T>& Atom<T>::operator=(const Atom& other)
 }
 
 template <typename T>
-int Atom<T>::encode(Encoder& encoder, std::istream& input) const
+int Atom<T>::encode(Encoder& encoder) const
 {
-  return encoder.encode(*this, input);
+  return encoder.encode(*this);
 }
 
 template <typename T>

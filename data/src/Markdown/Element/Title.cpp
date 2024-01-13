@@ -1,6 +1,5 @@
 #include "Title.hpp"
 
-#include <iostream>
 #include <memory>
 
 #include "Element.hpp"
@@ -29,9 +28,9 @@ Title& Title::operator=(const Title& other)
   return *this;
 }
 
-int Title::encode(Encoder& encoder, std::istream& input) const
+int Title::encode(Encoder& encoder) const
 {
-  return encoder.encode(*this, input);
+  return encoder.encode(*this);
 }
 
 bool Title::is_atom() const

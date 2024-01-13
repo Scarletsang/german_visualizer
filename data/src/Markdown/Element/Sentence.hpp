@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -18,7 +17,7 @@ class Sentence : public MarkdownElement
 
     Sentence& operator=(const Sentence& other);
 
-    virtual int encode(Encoder& encoder, std::istream& input) const;
+    virtual int encode(Encoder& encoder) const;
     virtual bool  is_atom() const;
 
     void  add_word(std::weak_ptr<Word> word);

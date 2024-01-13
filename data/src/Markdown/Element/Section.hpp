@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -19,7 +18,7 @@ class Section : public Collection<MarkdownElement>
 
     Section& operator=(const Section& other);
 
-    virtual int encode(Encoder& encoder, std::istream& input) const;
+    virtual int encode(Encoder& encoder) const;
     virtual bool  is_atom() const;
 
     void  set_title(std::shared_ptr<Title> title);

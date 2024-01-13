@@ -1,6 +1,5 @@
 #include "Section.hpp"
 
-#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -30,9 +29,9 @@ Section& Section::operator=(const Section& other)
   return *this;
 }
 
-int Section::encode(Encoder& encoder, std::istream& input) const
+int Section::encode(Encoder& encoder) const
 {
-  return encoder.encode(*this, input);
+  return encoder.encode(*this);
 }
 
 bool  Section::is_atom() const

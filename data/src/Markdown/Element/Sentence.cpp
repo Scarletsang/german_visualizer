@@ -1,6 +1,5 @@
 #include "Sentence.hpp"
 
-#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -21,9 +20,9 @@ Sentence& Sentence::operator=(const Sentence& other)
   return *this;
 }
 
-int Sentence::encode(Encoder& encoder, std::istream& input) const
+int Sentence::encode(Encoder& encoder) const
 {
-  return encoder.encode(*this, input);
+  return encoder.encode(*this);
 }
 
 bool  Sentence::is_atom() const

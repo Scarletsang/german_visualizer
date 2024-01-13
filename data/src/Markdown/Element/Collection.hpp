@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -18,7 +17,7 @@ class Collection : public MarkdownElement
 
     Collection& operator=(const Collection& other);
 
-    virtual int encode(Encoder& encoder, std::istream& input) const;
+    virtual int encode(Encoder& encoder) const;
     virtual bool  is_atom() const;
 
     void  add_element(element line);
@@ -53,9 +52,9 @@ Collection<T>& Collection<T>::operator=(const Collection& other)
 }
 
 template <typename T>
-int Collection<T>::encode(Encoder& encoder, std::istream& input) const
+int Collection<T>::encode(Encoder& encoder) const
 {
-  return encoder.encode(*this, input);
+  return encoder.encode(*this);
 }
 
 template <typename T>
