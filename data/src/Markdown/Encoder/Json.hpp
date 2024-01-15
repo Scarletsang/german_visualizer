@@ -18,6 +18,7 @@ class JsonEncoder : public Encoder
     virtual ~JsonEncoder();
 
     virtual int encode(const Character& character) override;
+    virtual int encode(const Delimiter& delimiter) override;
     virtual int encode(const Word& word) override;
     virtual int encode(const Number& number) override;
 

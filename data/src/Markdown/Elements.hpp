@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Element/Atom/Character.hpp"
+#include "Element/Atom/Delimiter.hpp"
 #include "Element/Atom/Word.hpp"
 #include "Element/Atom/Number.hpp"
 #include "Element/Collection/Paragraph.hpp"
@@ -15,6 +16,7 @@
 // atom
 std::shared_ptr<Character>  CreateCharacter(char c);
 std::shared_ptr<Word>       CreateWord(const std::string& word);
+std::shared_ptr<Delimiter>  CreateDelimiter(const std::string& word);
 std::shared_ptr<Number>     CreateNumber(int number);
 std::shared_ptr<Number>     CreateNumber(float number);
 

@@ -34,6 +34,7 @@ TOKENIZER_SRC:= \
 ELEMENT_SRC:= \
 	Markdown/Element/Atom/Character.cpp \
 	Markdown/Element/Atom/Number.cpp \
+	Markdown/Element/Atom/Delimiter.cpp \
 	Markdown/Element/Atom/Word.cpp \
 	Markdown/Element/Collection/Paragraph.cpp \
 	Markdown/Element/Collection/Section.cpp \

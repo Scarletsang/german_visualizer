@@ -1,54 +1,36 @@
-// #ifndef MARKDOWN_MEMORY_HPP
-// # define MARKDOWN_MEMORY_HPP
+// #pragma once
 
-// #include <map>
+// #include <string>
+// #include <istream>
+// #include <vector>
 // #include <memory>
 
-// #include "Element.hpp"
+// #include "Element/Element.hpp"
+// #include "Elements.hpp"
+// #include "Parser/Error.hpp"
 
-// class ObjectKey
-// {
+// #include "libcpp/Result.hpp"
+// #include "libcpp/Parser.hpp"
+// #include "libcpp/parser/ErrorTrace.hpp"
 
-// };
-
-// class Markdown
+// class MarkdownParser : public libcpp::Parser
 // {
 //   public:
-//     typedef size_t  Hash;
-//     typedef std::map<Hash, std::shared_ptr<MarkdownObject> > Objects;
-//     typedef ConcretObject<char> Character;
-//     typedef ConcretObject<std::string> Word;
-//     typedef ConcretObject<int> Number;
-//     Markdown();
-//     ~Markdown();
+//     using ErrorTrace = libcpp::ErrorTrace<Error>;
+//     using ParseTarget = std::shared_ptr<MarkdownElement>;
+//     template <typename T>
+//     using ParseResult = libcpp::Result<std::shared_ptr<T>, ErrorTrace>;
 
-//     std::weak_ptr<Character>        create_character(const char character);
-//     std::weak_ptr<Word>             create_word(const std::string& word);
-//     std::weak_ptr<Number>           create_number(const int number);
+//     MarkdownParser(std::istream& input);
+//     ~MarkdownParser();
 
-//     std::weak_ptr<MarkdownLinks>    create_title(const std::string& title, int level);
-//     std::weak_ptr<MarkdownLinks>    create_word_linked(const std::string& word);
-//     std::weak_ptr<MarkdownLinks>    create_title_linked(const std::string& title, int level);
-
-//     std::weak_ptr<MarkdownCompose>  create_line();
-//     std::weak_ptr<MarkdownLinks>    create_paragraph();
-//     std::weak_ptr<MarkdownCompose>  create_document();
-
-//     std::shared_ptr<MarkdownObject> remove_object(std::weak_ptr<MarkdownObject>);
-
-//     const Objects&                  get_objects() const;
+//     ParseResult<Document> parse_document();
 
 //   private:
-//     Objects   shared_objects_;
-//     Objects   unique_objects_;
-
-//     template <typename T>
-//     std::weak_ptr<T>                add(std::shared_ptr<T> object);
-
-//     template <typename T>
-//     std::weak_ptr<MarkdownLinks>    add_links(std::weak_ptr<T> object, MarkdownType type);
-
-//     std::weak_ptr<MarkdownCompose>  add_compose(MarkdownType type);
+//     ParseResult<Title>  parse_title(ParseTarget markdown);
+//     ParseResult<Paragraph>  parse_paragraph(ParseTarget markdown);
+//     ParseResult<Sentence> parse_sentence(ParseTarget markdown);
+//     ParseResult<Word> parse_word(ParseTarget markdown);
+//     ParseResult<Character>  parse_character(ParseTarget markdown);
+//     ParseResult<Number> parse_number(ParseTarget markdown);
 // };
-
-// #endif

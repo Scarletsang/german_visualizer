@@ -8,6 +8,7 @@ class MarkdownElement;
 
 // atom
 class Character;
+class Delimiter;
 class Word;
 class Number;
 
@@ -28,6 +29,7 @@ class Encoder
 
     virtual int encode(const Character& character) = 0;
     virtual int encode(const Word& word) = 0;
+    virtual int encode(const Delimiter& delimiter) = 0;
     virtual int encode(const Number& number) = 0;
 
     // group of atoms

@@ -3,8 +3,8 @@
 Word::Word()
   : Atom<std::string>() {}
 
-Word::Word(const std::string& character)
-  : Atom<std::string>(character) {}
+Word::Word(const std::string& word)
+  : Atom<std::string>(word) {}
 
 Word::Word(const Word& object)
   : Atom<std::string>(object) {}

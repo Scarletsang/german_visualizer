@@ -47,6 +47,22 @@ int JsonEncoder::encode(const Word& word)
   return EXIT_SUCCESS;
 }
 
+int JsonEncoder::encode(const Delimiter& delimiter)
+{
+  output_ << '{';
+  {
+    settings_.increase_level();
+    write_newline_indent();
+    write_pair("type", "delimiter", true);
+    write_newline_indent();
+    write_pair("value", delimiter.data(), false);
+    settings_.decrease_level();
+  }
+  write_newline_indent();
+  output_ << '}';
+  return EXIT_SUCCESS;
+}
+
 int JsonEncoder::encode(const Number& number)
 {
   output_ << '{';
