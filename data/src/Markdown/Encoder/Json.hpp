@@ -8,7 +8,7 @@
 
 #include "Encoder.hpp"
 #include "Encoder/Json/Settings.hpp"
-#include "Element/Atom/Number.hpp"
+#include "Elements.hpp"
 
 class JsonEncoder : public Encoder
 {
