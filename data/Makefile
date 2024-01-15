@@ -23,6 +23,14 @@ INCLUDE_DIR:= src/Markdown libcpp/include
 MAIN_SRC:= \
 	Markdown/Elements.cpp \
 	main.cpp
+TOKENIZER_SRC:= \
+	Markdown/Parser/Token/Character.cpp \
+	Markdown/Parser/Token/Number.cpp \
+	Markdown/Parser/Token/Space.cpp \
+	Markdown/Parser/Token/Symbol.cpp \
+	Markdown/Parser/Token/Word.cpp \
+	Markdown/Parser/Tokenizer.cpp \
+	Markdown/Parser/Tokenizer/Markdown.cpp
 ELEMENT_SRC:= \
 	Markdown/Element/Atom/Character.cpp \
 	Markdown/Element/Atom/Number.cpp \
@@ -35,7 +43,7 @@ ELEMENT_SRC:= \
 ENCODER_SRC:= \
 	Markdown/Encoder/Json/Settings.cpp \
 	Markdown/Encoder/Json.cpp
-SRC:= $(MAIN_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
+SRC:= $(MAIN_SRC) $(TOKENIZER_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
 
 ####################################
 ######     Library files     #######

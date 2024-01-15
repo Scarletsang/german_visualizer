@@ -1,0 +1,17 @@
+
+TOKEN-'#'
+TOKEN-WORD
+TOKEN-CHAR
+TOKEN-NUMBER
+TOKEN-SPACE
+
+Document := *[ Section ] | eof
+Section := Header | Body | Header Body
+Header := TOKEN-'#' Paragraph
+Body := [ Paragraph | Sentence ] [ Body ]
+Paragraph := [ Sentence ] [ Paragraph ]
+Sentence := ( Word | Character | Number ) [ Space Sentence ]
+Word := TOKEN-WORD
+Character := TOKEN-CHAR
+Number := TOKEN-NUMBER
+Space := TOKEN-SPACE | ' '
