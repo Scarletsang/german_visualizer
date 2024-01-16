@@ -11,7 +11,7 @@ ifdef FSANITIZE
 	CXXFLAGS+= -g3 -fsanitize=address -DDEBUG=1
 	LDFLAGS+= -g3 -fsanitize=address
 endif
-INCLUDE_DIR:= src/Markdown libcpp/include
+INCLUDE_DIR:= src libcpp/include
 
 ###################################
 ######     Source files     #######
@@ -21,31 +21,31 @@ INCLUDE_DIR:= src/Markdown libcpp/include
 # contatenate them in the SRC variable like this:
 
 MAIN_SRC:= \
-	Markdown/Elements.cpp \
+	Elements.cpp \
 	main.cpp
 TOKENIZER_SRC:= \
-	Markdown/Parser/Token/Character.cpp \
-	Markdown/Parser/Token/Number.cpp \
-	Markdown/Parser/Token/Space.cpp \
-	Markdown/Parser/Token/Symbol.cpp \
-	Markdown/Parser/Token/Word.cpp \
-	Markdown/Parser/Tokenizer.cpp \
-	Markdown/Parser/Markdown/Tokenizer/Settings.cpp \
-	Markdown/Parser/Markdown/Tokenizer.cpp \
-	Markdown/Parser/Markdown/Parser.cpp
+	Parser/Token/Character.cpp \
+	Parser/Token/Number.cpp \
+	Parser/Token/Space.cpp \
+	Parser/Token/Symbol.cpp \
+	Parser/Token/Word.cpp \
+	Parser/Tokenizer.cpp \
+	Parser/Markdown/Tokenizer/Settings.cpp \
+	Parser/Markdown/Tokenizer.cpp \
+	Parser/Markdown/Parser.cpp
 ELEMENT_SRC:= \
-	Markdown/Element/Atom/Character.cpp \
-	Markdown/Element/Atom/Number.cpp \
-	Markdown/Element/Atom/Delimiter.cpp \
-	Markdown/Element/Atom/Word.cpp \
-	Markdown/Element/Collection/Paragraph.cpp \
-	Markdown/Element/Collection/Section.cpp \
-	Markdown/Element/Collection/Document.cpp \
-	Markdown/Element/Collection/Sentence.cpp \
-	Markdown/Element/Title.cpp
+	Element/Atom/Character.cpp \
+	Element/Atom/Number.cpp \
+	Element/Atom/Delimiter.cpp \
+	Element/Atom/Word.cpp \
+	Element/Collection/Paragraph.cpp \
+	Element/Collection/Section.cpp \
+	Element/Collection/Document.cpp \
+	Element/Collection/Sentence.cpp \
+	Element/Title.cpp
 ENCODER_SRC:= \
-	Markdown/Encoder/Json/Settings.cpp \
-	Markdown/Encoder/Json.cpp
+	Encoder/Json/Settings.cpp \
+	Encoder/Json.cpp
 SRC:= $(MAIN_SRC) $(TOKENIZER_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
 
 ####################################
