@@ -13,7 +13,7 @@ class SimpleToken : public Token
     SimpleToken();
     SimpleToken(const T& data);
     SimpleToken(const SimpleToken& token);
-    ~SimpleToken();
+    virtual ~SimpleToken();
     SimpleToken& operator=(const SimpleToken& token);
 
     void  set_data(const T& data);

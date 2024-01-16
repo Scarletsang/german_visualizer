@@ -23,7 +23,7 @@ class MarkdownParser
 
     std::shared_ptr<MarkdownElement> parse_element();
     std::shared_ptr<MarkdownElement> parse_element_delimiter();
-    int  ignore_element_end();
+    int peek_element_end(bool consume);
 
     std::shared_ptr<Sentence>   parse_sentence();
     std::shared_ptr<MarkdownElement>  parse_sentence_element();

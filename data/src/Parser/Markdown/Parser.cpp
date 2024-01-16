@@ -120,14 +120,16 @@ std::shared_ptr<Paragraph>  MarkdownParser::parse_paragraph()
     if (!sentence)
       break;
     paragraph->add_element(sentence);
-    if (is_eof())
+    if (peek_element_end(false) == EXIT_SUCCESS)
+    {
+      std::cout << "no way" << std::endl;
       break;
-    parse_space();
+    }
   }
+  std::cout << "p" << paragraph->data().size() << ": ";
+  tokenizer_.debug();
   if (paragraph->data().empty())
-  {
     return nullptr;
-  }
   return paragraph;
 }
 
@@ -143,7 +145,11 @@ std::shared_ptr<MarkdownElement> MarkdownParser::parse_element()
     if (paragraph)
     {
       if (paragraph->data().size() == 1)
+      {
+        if (paragraph->data()[0]->data().size() == 1)
+          return paragraph->data()[0]->data()[0];
         return paragraph->data()[0];
+      }
       return paragraph;
     }
   }
@@ -170,7 +176,7 @@ std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter()
   std::shared_ptr<MarkdownElement> element = parse_element();
   if (!element)
     return nullptr;
-  if (ignore_element_end() == EXIT_FAILURE)
+  if (peek_element_end(true) == EXIT_FAILURE)
   {
     tokenizer_.rollback(original_state);
     return nullptr;
@@ -183,21 +189,25 @@ int MarkdownParser::ignore_eof()
   std::istream::pos_type original_state = tokenizer_.snapshot();
   if (!tokenizer_.tokenize_character())
     return EXIT_SUCCESS;
-  else if (!tokenizer_.tokenize_character())
-    return EXIT_SUCCESS;
   tokenizer_.rollback(original_state);
   return EXIT_FAILURE;
 }
 
-int  MarkdownParser::ignore_element_end()
+int  MarkdownParser::peek_element_end(bool consume)
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
   if (ignore_eof() == EXIT_SUCCESS)
+  {
+    if (!consume)
+      tokenizer_.rollback(original_state);
     return EXIT_SUCCESS;
+  }
   if (ignore_newline() == EXIT_SUCCESS)
   {
     while (ignore_newline() == EXIT_SUCCESS)
       ;
+    if (!consume)
+      tokenizer_.rollback(original_state);
     return EXIT_SUCCESS;
   }
   tokenizer_.rollback(original_state);
@@ -207,34 +217,38 @@ int  MarkdownParser::ignore_element_end()
 std::shared_ptr<Sentence>   MarkdownParser::parse_sentence()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
-  std::shared_ptr<MarkdownElement>  element = parse_sentence_element();
-  if (!element)
-    return nullptr;
   std::shared_ptr<Sentence> sentence = CreateSentence();
-  sentence->add_element(element);
+  std::shared_ptr<MarkdownElement>  element;
+  std::istream::pos_type second_state = tokenizer_.snapshot();
+  std::shared_ptr<Delimiter>  space;
+
   while (!is_eof())
   {
-    std::istream::pos_type second_state = tokenizer_.snapshot();
-    std::shared_ptr<Delimiter>  space = parse_space();
-    if (!space)
-      break;
+    space = parse_space();
+    if (space && !space->data().empty())
+    {
+      sentence->add_element(space);
+      second_state = tokenizer_.snapshot();
+      continue;
+    }
     element = parse_sentence_element();
     if (!element)
     {
       tokenizer_.rollback(second_state);
       break;
     }
-    if (!space->data().empty())
-      sentence->add_element(space);
     sentence->add_element(element);
+    second_state = tokenizer_.snapshot();
   }
   std::shared_ptr<Character> fullstop = parse_fullstop();
+  std::cout << "sentence: " << (fullstop ? fullstop->data() : '8') << std::endl;
+  tokenizer_.debug();
   if (fullstop)
   {
     sentence->add_element(fullstop);
     return sentence;
   }
-  else if (ignore_element_end() == EXIT_SUCCESS)
+  if (!sentence->data().empty())
     return sentence;
   tokenizer_.rollback(original_state);
   return nullptr;
@@ -282,7 +296,7 @@ std::shared_ptr<Delimiter> MarkdownParser::parse_space()
   if (token_space)
   {
     if (token_space->data().empty())
-      return std::make_shared<Delimiter>();
+      return std::shared_ptr<Delimiter>(new Delimiter());
     return CreateDelimiter(token_space->data());
   }
   return nullptr;
@@ -306,6 +320,7 @@ std::shared_ptr<Character>  MarkdownParser::parse_fullstop()
   std::unique_ptr<TokenCharacter> token_punctuation = tokenizer_.tokenize_sentence_end();
   if (token_punctuation)
     return CreateCharacter(token_punctuation->data());
+  std::cout << "fullstop failed" << std::endl;
   return nullptr;
 }
 

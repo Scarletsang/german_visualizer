@@ -60,6 +60,7 @@ std::unique_ptr<TokenCharacter> MarkdownTokenizer::tokenize_sentence_end()
   stream_.get(character);
   if (stream_.eof())
     return nullptr;
+  std::cout << "Sentence end: " << character << std::endl;
   return std::unique_ptr<TokenCharacter>(new TokenCharacter(character));
 }
 
@@ -84,10 +85,16 @@ std::unique_ptr<TokenSpace> MarkdownTokenizer::tokenize_space()
     return std::unique_ptr<TokenSpace>(new TokenSpace());
   std::string spaces;
   char character;
-  while (stream_.good() && settings_.is_space(character))
+  while (stream_.good())
   {
     stream_.clear();
     stream_.get(character);
+    if (!settings_.is_space(character))
+    {
+      stream_.clear();
+      stream_.unget();
+      break;
+    }
     spaces += character;
   }
   if (spaces.empty())
