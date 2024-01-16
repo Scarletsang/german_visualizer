@@ -6,21 +6,21 @@ TOKEN-NUMBER
 TOKEN-SPACE
 
 Document := (Section | ElementD) [ Document ] | eof
-    Element := Paragraph | Sentence | Word | Character | Number
+    Element := Section | Paragraph | Sentence | Word | Character | Number
     ElementD := Element ElementEnd
     ElementEnd := Newline | eof
 Section := Title Body
-    Body := ElementD [ Body ]
-Title := TOKEN-'#' Paragraph ElementEnd
+    Body := ElementD [ Body ] # not Title with equal or higher level
+Title := TOKEN-'#' Space Paragraph ElementEnd
 Paragraph := Sentence [ Paragraph ]
-Sentence := SentenceElement [ Space Sentence ] Fullstop
+Sentence := SentenceElement [ Space Sentence ] [ Fullstop | ElementEnd(peak) ]
     SentenceElement := Word | Number | Punctuation
 Word := TOKEN-WORD
 Number := TOKEN-NUMBER
 Space := TOKEN-SPACE | TOKEN-DOMINANT-SPACE
 
-eof := TOKEN-CHAR
-Newline := TOKEN-CHAR
+eof := N/A
+Newline := N/A
 Punctuation := TOKEN-CHAR # not Fullstop
 Fullstop := TOKEN-CHAR
 Character := TOKEN-CHAR

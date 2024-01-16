@@ -6,18 +6,18 @@
 #include "Parser/Tokenizer.hpp"
 #include "Elements.hpp"
 
-class Parser
+class MarkdownParser
 {
   public:
     using MarkdownElements = std::vector<std::shared_ptr<MarkdownElement> >;
-    Parser(Tokenizer& tokenizer);
-    Parser(const Parser& object) = delete;
-    virtual ~Parser();
-    Parser& operator=(const Parser& other) = delete;
+    MarkdownParser(Tokenizer& tokenizer);
+    MarkdownParser(const MarkdownParser& object) = delete;
+    virtual ~MarkdownParser();
+    MarkdownParser& operator=(const MarkdownParser& other) = delete;
 
     std::shared_ptr<Document> parse_document();
     std::shared_ptr<Section>  parse_section();
-    MarkdownElements parse_body();
+    MarkdownElements parse_body(int level);
     std::shared_ptr<Title>    parse_title();
     std::shared_ptr<Paragraph>  parse_paragraph();
 
@@ -33,8 +33,8 @@ class Parser
     // handle dominant space. A dominant space is an empty Delimiter
     std::shared_ptr<Delimiter>  parse_space();
 
-    std::shared_ptr<Character>  parse_eof();
-    std::shared_ptr<Character>  parse_newline();
+    int  ignore_newline();
+    int  ignore_eof();
     std::shared_ptr<Character>  parse_punctuation();
     std::shared_ptr<Character>  parse_fullstop();
     std::shared_ptr<Character>  parse_character();

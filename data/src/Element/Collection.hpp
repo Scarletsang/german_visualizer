@@ -20,8 +20,8 @@ class Collection : public MarkdownElement
     virtual int encode(Encoder& encoder) const override;
     virtual bool  is_atom() const override;
 
-    void  add_element(element element);
-    void  add_elements(std::vector<element>& elements);
+    virtual int  add_element(element element);
+    virtual int  add_elements(std::vector<element>& elements);
 
     const std::vector<element>& data() const;
     std::vector<element>& data();
@@ -65,16 +65,18 @@ bool  Collection<T>::is_atom() const
 }
 
 template <typename T>
-void  Collection<T>::add_element(element element)
+int  Collection<T>::add_element(element element)
 {
   data_.push_back(element);
+  return EXIT_SUCCESS;
 }
 
 template <typename T>
-void  Collection<T>::add_elements(std::vector<element>& elements)
+int  Collection<T>::add_elements(std::vector<element>& elements)
 {
   for (auto& element : elements)
     data_.push_back(element);
+  return EXIT_SUCCESS;
 }
 
 template <typename T>

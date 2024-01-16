@@ -34,17 +34,41 @@ bool  Sentence::is_atom() const
   return false;
 }
 
-void  Sentence::add_word(std::shared_ptr<Word> word)
+int  Sentence::add_element(std::shared_ptr<Word> word)
 {
   data_.push_back(word);
+  return EXIT_SUCCESS;
 }
 
-void  Sentence::add_number(std::shared_ptr<Number> number)
+int  Sentence::add_element(std::shared_ptr<Number> number)
 {
   data_.push_back(number);
+  return EXIT_SUCCESS;
 }
 
-void  Sentence::add_character(std::shared_ptr<Character> character)
+int  Sentence::add_element(std::shared_ptr<Character> character)
 {
   data_.push_back(character);
+  return EXIT_SUCCESS;
+}
+
+int  Sentence::add_element(std::shared_ptr<Delimiter> delimiter)
+{
+  data_.push_back(delimiter);
+  return EXIT_SUCCESS;
+}
+
+int  Sentence::add_element(std::shared_ptr<MarkdownElement> element)
+{
+  if (dynamic_cast<Word*>(element.get()))
+    add_element(std::static_pointer_cast<Word>(element));
+  else if (dynamic_cast<Number*>(element.get()))
+    add_element(std::static_pointer_cast<Number>(element));
+  else if (dynamic_cast<Character*>(element.get()))
+    add_element(std::static_pointer_cast<Character>(element));
+  else if (dynamic_cast<Delimiter*>(element.get()))
+    add_element(std::static_pointer_cast<Delimiter>(element));
+  else
+    return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }

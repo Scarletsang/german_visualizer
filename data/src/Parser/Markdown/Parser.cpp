@@ -5,40 +5,45 @@
 #include "Parser/Tokenizer.hpp"
 #include "Elements.hpp"
 
-Parser::Parser(Tokenizer& tokenizer)
+MarkdownParser::MarkdownParser(Tokenizer& tokenizer)
   : tokenizer_(tokenizer) {}
 
-Parser::~Parser() {}
+MarkdownParser::~MarkdownParser() {}
 
-std::shared_ptr<Document> Parser::parse_document()
+std::shared_ptr<Document> MarkdownParser::parse_document()
 {
   std::shared_ptr<Document> document = CreateDocument();
-  MarkdownElements  elements;
-  while (is_healthy())
+  std::shared_ptr<MarkdownElement>  element;
+  while (!is_eof())
   {
-    std::shared_ptr<MarkdownElement> section = parse_section();
-    if (section)
+    // std::shared_ptr<MarkdownElement> section = parse_section();
+    // if (section)
+    // {
+    //   document->add_element(section);
+    //   continue;
+    // }
+    element = parse_element_delimiter();
+    if (element)
     {
-      document->add_element(section);
+      document->add_element(element);
       continue;
     }
-    elements = parse_body();
-    if (!elements.empty())
-    {
-      document->add_elements(elements);
-      continue;
-    }
+    break;
   }
   return document;
 }
 
-std::shared_ptr<Section> Parser::parse_section()
+std::shared_ptr<Section> MarkdownParser::parse_section()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
+  tokenizer_.debug();
   std::shared_ptr<Title> title = parse_title();
+  tokenizer_.debug();
   if (!title)
+  {
     return nullptr;
-  Parser::MarkdownElements body = parse_body();
+  }
+  MarkdownParser::MarkdownElements body = parse_body(title->level());
   if (body.empty())
   {
     tokenizer_.rollback(original_state);
@@ -49,23 +54,40 @@ std::shared_ptr<Section> Parser::parse_section()
   return section;
 }
 
-Parser::MarkdownElements Parser::parse_body()
+MarkdownParser::MarkdownElements MarkdownParser::parse_body(int level)
 {
   MarkdownElements  elements;
-  while (is_healthy())
+  while (!is_eof())
   {
+    // std::cout << "level: " << level << ' ' << elements.size() << std::endl;
+    std::istream::pos_type original_state = tokenizer_.snapshot();
     std::shared_ptr<MarkdownElement> element = parse_element_delimiter();
     if (element)
+    {
+      std::shared_ptr<Section> section = std::dynamic_pointer_cast<Section>(element);
+      if (section && section->title()->level() <= level)
+      {
+        tokenizer_.rollback(original_state);
+        return elements;
+      }
       elements.push_back(element);
+    }
+    else
+      break;
   }
   return elements;
 }
 
-std::shared_ptr<Title>  Parser::parse_title()
+std::shared_ptr<Title>  MarkdownParser::parse_title()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
   std::unique_ptr<TokenSymbol> hashes = tokenizer_.tokenize_symbol();
-  if (hashes->data() != '#')
+  if (!hashes || hashes->data() != '#')
+  {
+    tokenizer_.rollback(original_state);
+    return nullptr;
+  }
+  if (!parse_space())
   {
     tokenizer_.rollback(original_state);
     return nullptr;
@@ -84,23 +106,29 @@ std::shared_ptr<Title>  Parser::parse_title()
   return CreateTitle(hashes->level(), paragraph);
 }
 
-std::shared_ptr<Paragraph>  Parser::parse_paragraph()
+std::shared_ptr<Paragraph>  MarkdownParser::parse_paragraph()
 {
   std::shared_ptr<Paragraph>  paragraph = CreateParagraph();
-  while (is_healthy())
+  while (!is_eof())
   {
     std::shared_ptr<Sentence> sentence = parse_sentence();
-    if (!sentence)
+    if (sentence)
+      paragraph->add_element(sentence);
+    else
       break;
-    paragraph->add_element(sentence);
   }
   if (paragraph->data().empty())
     return nullptr;
   return paragraph;
 }
 
-std::shared_ptr<MarkdownElement> Parser::parse_element()
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element()
 {
+  {
+    std::shared_ptr<Section> section = parse_section();
+    if (section)
+      return section;
+  }
   {
     std::shared_ptr<Paragraph> paragraph = parse_paragraph();
     if (paragraph)
@@ -127,7 +155,7 @@ std::shared_ptr<MarkdownElement> Parser::parse_element()
   return nullptr;
 }
 
-std::shared_ptr<MarkdownElement> Parser::parse_element_delimiter()
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
   std::shared_ptr<MarkdownElement> element = parse_element();
@@ -141,13 +169,29 @@ std::shared_ptr<MarkdownElement> Parser::parse_element_delimiter()
   return element;
 }
 
-std::shared_ptr<Sentence>   Parser::parse_sentence()
+int MarkdownParser::ignore_eof()
+{
+  tokenizer_.tokenize_character();
+  if (is_eof())
+    return EXIT_SUCCESS;
+  return EXIT_FAILURE;
+}
+
+int  MarkdownParser::ignore_element_end()
+{
+  if (ignore_eof() || (ignore_newline() == EXIT_SUCCESS))
+    return EXIT_SUCCESS;
+  return EXIT_FAILURE;
+}
+
+std::shared_ptr<Sentence>   MarkdownParser::parse_sentence()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
   std::shared_ptr<MarkdownElement>  element = parse_sentence_element();
   if (!element)
     return nullptr;
   std::shared_ptr<Sentence> sentence = CreateSentence();
+  sentence->add_element(element);
   while (is_healthy())
   {
     std::istream::pos_type second_state = tokenizer_.snapshot();
@@ -164,15 +208,23 @@ std::shared_ptr<Sentence>   Parser::parse_sentence()
       sentence->add_element(space);
     sentence->add_element(element);
   }
-  if (sentence->data().empty())
+  std::shared_ptr<Character> fullstop = parse_fullstop();
+  if (fullstop)
   {
-    tokenizer_.rollback(original_state);
-    return nullptr;
+    sentence->add_element(fullstop);
+    return sentence;
   }
-  return sentence;
+  std::istream::pos_type second_state = tokenizer_.snapshot();
+  if (ignore_element_end() == EXIT_SUCCESS)
+  {
+    tokenizer_.rollback(second_state);
+    return sentence;
+  }
+  tokenizer_.rollback(original_state);
+  return nullptr;
 }
 
-std::shared_ptr<MarkdownElement>   Parser::parse_sentence_element()
+std::shared_ptr<MarkdownElement>   MarkdownParser::parse_sentence_element()
 {
   {
     std::shared_ptr<Word> word = parse_word();
@@ -190,4 +242,74 @@ std::shared_ptr<MarkdownElement>   Parser::parse_sentence_element()
       return punctuation;
   }
   return nullptr;
+}
+
+std::shared_ptr<Word> MarkdownParser::parse_word()
+{
+  std::unique_ptr<TokenWord> token_word = tokenizer_.tokenize_word();
+  if (token_word)
+    return CreateWord(token_word->data());
+  return nullptr;
+}
+
+std::shared_ptr<Number> MarkdownParser::parse_number()
+{
+  std::unique_ptr<TokenNumber> token_number = tokenizer_.tokenize_number();
+  if (token_number)
+    return CreateNumber(token_number->data());
+  return nullptr;
+}
+
+std::shared_ptr<Delimiter> MarkdownParser::parse_space()
+{
+  std::unique_ptr<TokenSpace> token_space = tokenizer_.tokenize_space();
+  if (token_space)
+  {
+    if (token_space->data().empty())
+      return std::make_shared<Delimiter>();
+    return CreateDelimiter(token_space->data());
+  }
+  return nullptr;
+}
+
+int MarkdownParser::ignore_newline()
+{
+  std::unique_ptr<TokenCharacter> token_newline = tokenizer_.tokenize_character('\n');
+  if (token_newline)
+    return EXIT_SUCCESS;
+  return EXIT_FAILURE;
+}
+
+std::shared_ptr<Character>  MarkdownParser::parse_punctuation()
+{
+  std::unique_ptr<TokenCharacter> token_punctuation = tokenizer_.tokenize_punctuation();
+  if (token_punctuation)
+    return CreateCharacter(token_punctuation->data());
+  return nullptr;
+}
+
+std::shared_ptr<Character>  MarkdownParser::parse_fullstop()
+{
+  std::unique_ptr<TokenCharacter> token_punctuation = tokenizer_.tokenize_sentence_end();
+  if (token_punctuation)
+    return CreateCharacter(token_punctuation->data());
+  return nullptr;
+}
+
+std::shared_ptr<Character>  MarkdownParser::parse_character()
+{
+  std::unique_ptr<TokenCharacter> token_character = tokenizer_.tokenize_character();
+  if (token_character)
+    return CreateCharacter(token_character->data());
+  return nullptr;
+}
+
+bool  MarkdownParser::is_healthy() const
+{
+  return tokenizer_.stream().good();
+}
+
+bool  MarkdownParser::is_eof() const
+{
+  return tokenizer_.stream().eof();
 }

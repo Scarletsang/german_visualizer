@@ -1,12 +1,15 @@
 #include <fstream>
 #include <iostream>
-
+#include <sstream>
 #include <memory>
 #include <string>
 #include <random>
+
 #include <ctime>
 
 #include "Elements.hpp"
+#include "Parser/Markdown/Tokenizer.hpp"
+#include "Parser/Markdown/Parser.hpp"
 #include "Encoder/Json.hpp"
 
 int GenerateRandomNumber(int minValue, int maxValue)
@@ -41,7 +44,7 @@ std::shared_ptr<Sentence> CreateRandomSentence(int amount_of_words)
   {
     std::shared_ptr<Word> word = CreateWord(\
       GenerateRandomString(GenerateRandomNumber(1, 10)));
-    sentence->add_word(word);
+    sentence->add_element(word);
   }
   return sentence;
 }
@@ -79,14 +82,35 @@ std::shared_ptr<Section> CreateRandomSection(int level, int amount_of_paragraphs
   return section;
 }
 
-int main()
+std::shared_ptr<Document> CreateRandomDocument()
 {
   std::shared_ptr<Document> document = CreateDocument();
   document->add_element(CreateRandomSection(1, 3));
   // document->add_element(CreateRandomSentence(3));
   document->add_element(CreateRandomSection(2, 1));
+  return document;
+}
+
+std::shared_ptr<Document> CreateDocumentFromFile(char* filename)
+{
+  std::ifstream input_file(filename);
+  MarkdownTokenizerSettings parser_settings;
+  std::stringstream ss;
+  MarkdownTokenizer tokenizer = MarkdownTokenizer(input_file, parser_settings);
+  MarkdownParser parser = MarkdownParser(tokenizer);
+  std::shared_ptr<Document> document = parser.parse_document();
+  input_file.close();
+  return document;
+}
+
+int main(int argc, char** argv)
+{
+  std::shared_ptr<Document> document;
+  if (argc != 2)
+    document = CreateRandomDocument();
+  else
+    document = CreateDocumentFromFile(argv[1]);
   JsonEncoderSettings settings;
-  settings.toggle_compact();
   JsonEncoder encoder(std::cout, settings);
   encoder.encode(*document);
   std::cout << std::endl;

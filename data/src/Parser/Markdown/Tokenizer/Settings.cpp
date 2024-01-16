@@ -3,18 +3,20 @@
 #include <string>
 
 const std::string  MarkdownTokenizerSettings::kDefaultSpaceCharacters = "\t\n\r\f\v";
-const std::string  MarkdownTokenizerSettings::kDefaultPunctuationCharacters = ".!?,;:";
+const std::string  MarkdownTokenizerSettings::kDefaultPunctuationCharacters = "!?,;:";
 const std::string  MarkdownTokenizerSettings::kDefaultSymbolCharacters = "#-";
 
 MarkdownTokenizerSettings::MarkdownTokenizerSettings()
   : space_characters_(kDefaultSpaceCharacters),
     dominant_space_character_(kDefaultDominantSpaceCharacter),
+    sentence_end_character_(kDefaultSentenceEndCharacter),
     punctuation_characters_(kDefaultPunctuationCharacters),
     symbol_characters_(kDefaultSymbolCharacters) {}
 
 MarkdownTokenizerSettings::MarkdownTokenizerSettings(const MarkdownTokenizerSettings& settings)
   : space_characters_(settings.space_characters_),
     dominant_space_character_(settings.dominant_space_character_),
+    sentence_end_character_(settings.sentence_end_character_),
     punctuation_characters_(settings.punctuation_characters_),
     symbol_characters_(settings.symbol_characters_) {}
 
@@ -26,6 +28,7 @@ MarkdownTokenizerSettings& MarkdownTokenizerSettings::operator=(const MarkdownTo
   {
     space_characters_ = settings.space_characters_;
     dominant_space_character_ = settings.dominant_space_character_;
+    sentence_end_character_ = settings.sentence_end_character_;
     punctuation_characters_ = settings.punctuation_characters_;
     symbol_characters_ = settings.symbol_characters_;
   }
@@ -40,6 +43,11 @@ bool  MarkdownTokenizerSettings::is_space(char character) const
 bool  MarkdownTokenizerSettings::is_dominant_space(char character) const
 {
   return character == dominant_space_character_;
+}
+
+bool  MarkdownTokenizerSettings::is_sentence_end_character(char character) const
+{
+  return character == sentence_end_character_;
 }
 
 bool  MarkdownTokenizerSettings::is_punctuation(char character) const
@@ -65,6 +73,11 @@ void  MarkdownTokenizerSettings::set_space_characters(const std::string& space_c
 void  MarkdownTokenizerSettings::set_dominate_space_character(char character)
 {
   dominant_space_character_ = character;
+}
+
+void  MarkdownTokenizerSettings::set_sentence_end_character(char character)
+{
+  sentence_end_character_ = character;
 }
 
 void  MarkdownTokenizerSettings::set_punctuation_characters(const std::string& punctuation_characters)

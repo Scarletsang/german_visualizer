@@ -113,11 +113,9 @@ $(OBJ_DIR):
 ###############################
 
 clean:
-	@${MAKE} -C libcpp clean
 	@rm -f $(OBJ)
 
 fclean: clean
-	@${MAKE} -C libcpp fclean
 	@rm -rf $(OBJ_DIR)
 	@rm -f $(NAME)
 
