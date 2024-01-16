@@ -8,10 +8,10 @@ TOKEN-SPACE
 Document := (Section | ElementD) [ Document ] | eof
     Element := Section | Paragraph | Sentence | Word | Character | Number
     ElementD := Element ElementEnd
-    ElementEnd := Newline | eof
+    ElementEnd := Newline [ ElementEnd ] | eof
 Section := Title Body
     Body := ElementD [ Body ] # not Title with equal or higher level
-Title := TOKEN-'#' Space Paragraph ElementEnd
+Title := TOKEN-'#' Space Paragraph
 Paragraph := Sentence [ Paragraph ]
 Sentence := SentenceElement [ Space Sentence ] [ Fullstop | ElementEnd(peak) ]
     SentenceElement := Word | Number | Punctuation
