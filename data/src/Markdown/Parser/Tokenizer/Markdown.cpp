@@ -6,8 +6,9 @@
 #include "Parser/Tokens.hpp"
 #include "Parser/Tokenizer.hpp"
 
-MarkdownTokenizer::MarkdownTokenizer(std::istream& input_stream)
-  : Tokenizer(input_stream) {}
+MarkdownTokenizer::MarkdownTokenizer(std::istream& input_stream, \
+                                     const MarkdownTokenizerSettings& settings)
+  : Tokenizer(input_stream), settings_(settings) {}
 
 MarkdownTokenizer::~MarkdownTokenizer() {}
 

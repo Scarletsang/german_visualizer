@@ -2,7 +2,7 @@
 ######     Variables     #######
 ################################
 
-NAME:=markdown
+NAME:=markdown.out
 
 CC:=g++
 CXXFLAGS= -std=c++11 -pedantic -Wall -Wextra -Werror -MMD -MP -O2
@@ -30,7 +30,8 @@ TOKENIZER_SRC:= \
 	Markdown/Parser/Token/Symbol.cpp \
 	Markdown/Parser/Token/Word.cpp \
 	Markdown/Parser/Tokenizer.cpp \
-	Markdown/Parser/Tokenizer/Markdown.cpp
+	Markdown/Parser/Tokenizer/Markdown.cpp \
+	Markdown/Parser/Tokenizer/Markdown/Settings.cpp
 ELEMENT_SRC:= \
 	Markdown/Element/Atom/Character.cpp \
 	Markdown/Element/Atom/Number.cpp \

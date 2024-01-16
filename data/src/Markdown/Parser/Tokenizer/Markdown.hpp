@@ -5,11 +5,13 @@
 
 #include "Parser/Tokens.hpp"
 #include "Parser/Tokenizer.hpp"
+#include "Parser/Tokenizer/Markdown/Settings.hpp" 
 
 class MarkdownTokenizer : public Tokenizer
 {
   public:
-    MarkdownTokenizer(std::istream& input_stream);
+    MarkdownTokenizer(std::istream& input_stream,
+                      const MarkdownTokenizerSettings& settings = {});
     MarkdownTokenizer(const MarkdownTokenizer& markdown_tokenizer) = delete;
     ~MarkdownTokenizer();
     MarkdownTokenizer& operator=(const MarkdownTokenizer& markdown_tokenizer) = delete;
@@ -20,4 +22,7 @@ class MarkdownTokenizer : public Tokenizer
     virtual std::unique_ptr<TokenSymbol> tokenize_symbol() override;
     virtual std::unique_ptr<TokenWord> tokenize_word() override;
     virtual std::unique_ptr<Token> tokenize() override;
+
+  protected:
+    MarkdownTokenizerSettings settings_;
 };
