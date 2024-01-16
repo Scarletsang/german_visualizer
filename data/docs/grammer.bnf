@@ -5,19 +5,22 @@ TOKEN-CHAR
 TOKEN-NUMBER
 TOKEN-SPACE
 
-Document := (Section | Body) [ Document ] | eof
+Document := (Section | ElementD) [ Document ] | eof
+    Element := Paragraph | Sentence | Word | Character | Number
+    ElementD := Element ElementEnd
+    ElementEnd := Newline | eof
 Section := Title Body
-    Body := [ Paragraph | Sentence | Word | Character ] [ Body ]
-Title := TOKEN-'#' Paragraph Delimiter
-Paragraph := Sentence [ Paragraph ] Delimiter
-Sentence := ( Word | Punctuation | Number ) [ Space Sentence ] Fullstop
-Delimiter := Newline | eof
+    Body := ElementD [ Body ]
+Title := TOKEN-'#' Paragraph ElementEnd
+Paragraph := Sentence [ Paragraph ]
+Sentence := SentenceElement [ Space Sentence ] Fullstop
+    SentenceElement := Word | Number | Punctuation
 Word := TOKEN-WORD
 Number := TOKEN-NUMBER
 Space := TOKEN-SPACE | TOKEN-DOMINANT-SPACE
 
 eof := TOKEN-CHAR
 Newline := TOKEN-CHAR
-Punctuation := TOKEN-CHAR
+Punctuation := TOKEN-CHAR # not Fullstop
 Fullstop := TOKEN-CHAR
 Character := TOKEN-CHAR

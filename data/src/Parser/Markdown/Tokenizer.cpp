@@ -48,7 +48,7 @@ std::unique_ptr<TokenNumber> MarkdownTokenizer::tokenize_number()
 std::unique_ptr<TokenSpace> MarkdownTokenizer::tokenize_space()
 {
   std::istream::pos_type original_state = snapshot();
-  if (ignore_single_domainant_space() == EXIT_SUCCESS)
+  if (ignore_dominant_space() == EXIT_SUCCESS)
     return std::unique_ptr<TokenSpace>(new TokenSpace());
   std::string spaces;
   char character;
@@ -102,7 +102,7 @@ std::unique_ptr<TokenWord> MarkdownTokenizer::tokenize_word()
   return std::unique_ptr<TokenWord>(new TokenWord(word));
 }
 
-int MarkdownTokenizer::ignore_single_domainant_space()
+int MarkdownTokenizer::ignore_dominant_space()
 {
   std::istream::pos_type original_state = snapshot();
   char character;

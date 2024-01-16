@@ -20,10 +20,17 @@ class Parser
     MarkdownElements parse_body();
     std::shared_ptr<Title>    parse_title();
     std::shared_ptr<Paragraph>  parse_paragraph();
+
+    std::shared_ptr<MarkdownElement> parse_element();
+    std::shared_ptr<MarkdownElement> parse_element_delimiter();
+    int  ignore_element_end();
+
     std::shared_ptr<Sentence>   parse_sentence();
+    std::shared_ptr<MarkdownElement>  parse_sentence_element();
 
     std::shared_ptr<Word>       parse_word();
     std::shared_ptr<Number>     parse_number();
+    // handle dominant space. A dominant space is an empty Delimiter
     std::shared_ptr<Delimiter>  parse_space();
 
     std::shared_ptr<Character>  parse_eof();
