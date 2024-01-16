@@ -1,8 +1,7 @@
 #include "Number.hpp"
 
 #include <iostream>
-
-#include "libcpp/Maybe.hpp"
+#include <optional>
 
 namespace atom
 {
@@ -33,18 +32,18 @@ namespace atom
     return (*this);
   }
 
-  libcpp::Maybe<int> Number::get_integer() const
+  std::optional<int> Number::get_integer() const
   {
     if (this->type_ == kInteger)
-      return (libcpp::Maybe<int>(this->data_.integer));
-    return (libcpp::Maybe<int>());
+      return (this->data_.integer);
+    return (std::nullopt);
   }
 
-  libcpp::Maybe<float> Number::get_float() const
+  std::optional<float> Number::get_float() const
   {
     if (this->type_ == kFloat)
-      return (libcpp::Maybe<float>(this->data_.floats));
-    return (libcpp::Maybe<float>());
+      return (this->data_.floats);
+    return (std::nullopt);
   }
 
   std::ostream& operator<<(std::ostream& os, const Number& number)

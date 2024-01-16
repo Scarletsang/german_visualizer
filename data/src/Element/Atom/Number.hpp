@@ -1,8 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <optional>
 
-#include "libcpp/Maybe.hpp"
 #include "Element/Atom.hpp"
 #include "Encoder.hpp"
 
@@ -29,8 +29,8 @@ namespace atom
 
       Number& operator=(const Number& other);
 
-      libcpp::Maybe<int>  get_integer() const;
-      libcpp::Maybe<float>  get_float() const;
+      std::optional<int>  get_integer() const;
+      std::optional<float>  get_float() const;
 
       friend std::ostream& operator<<(std::ostream& os, const Number& number);
     protected:

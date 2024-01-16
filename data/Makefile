@@ -5,13 +5,13 @@
 NAME:=markdown.out
 
 CC:=g++
-CXXFLAGS= -std=c++11 -pedantic -Wall -Wextra -Werror -MMD -MP -O2
-LDFLAGS= -std=c++11 -pedantic
+CXXFLAGS= -std=c++17 -pedantic -Wall -Wextra -Werror -MMD -MP -O2
+LDFLAGS= -std=c++17 -pedantic
 ifdef FSANITIZE
 	CXXFLAGS+= -g3 -fsanitize=address -DDEBUG=1
 	LDFLAGS+= -g3 -fsanitize=address
 endif
-INCLUDE_DIR:= src libcpp/include
+INCLUDE_DIR:= src
 
 ###################################
 ######     Source files     #######
@@ -55,16 +55,13 @@ SRC:= $(MAIN_SRC) $(TOKENIZER_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
 # To compile a library, store a variable for their library file like this
 # and add a rule for it after the main rules:
 # LIBRARY_NAME=lib/LIBRARY_NAME/LIBRARY_NAME.a
-LIBCPP=libcpp/libcpp.a
 
 # To add a library, add the library header file like this:
 # INCLUDE_DIR+= lib/LIBRARY_NAME/include
-INCLUDE_DIR+= libcpp/include
 
 # Then add the library to the linking process in one of the following ways:
 # LDFLAGS+= -Llib/LIBRARY_NAME -lLIBRARY_NAME
 # LDFLAGS+= lib/LIBRARY_NAME/libLIBRARY_NAME.a
-LDFLAGS+= ${LIBCPP}
 
 ###########################################
 ######     Object name reformat     #######
@@ -84,7 +81,7 @@ DEPENDS:=$(OBJ:.o=.d)
 all:
 	@$(MAKE) $(NAME) -j
 
-$(NAME): $(LIBCPP) $(OBJ)
+$(NAME): $(OBJ)
 	@$(CC) $(OBJ) -o $(NAME) $(LDFLAGS) && echo "Compilation of $(NAME) successful"
 
 ##########################################
@@ -95,8 +92,6 @@ $(NAME): $(LIBCPP) $(OBJ)
 
 # $(LIBRARY_NAME):
 # 	@${MAKE} $(if $(FSANITIZE),FSANITIZE=yes,) -C lib/LIBRARY_NAME
-$(LIBCPP):
-	@${MAKE} $(if $(FSANITIZE),FSANITIZE=yes,) -C libcpp
 
 #########################################
 ######     Object compilation     #######
