@@ -20,6 +20,9 @@ class Tokenizer
     virtual std::unique_ptr<TokenWord> tokenize_word() = 0;
 
     const std::istream& stream() const;
+
+    std::istream::pos_type snapshot() const;
+    void  rollback(std::istream::pos_type position);
   
   protected:
     std::istream& stream_;

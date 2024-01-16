@@ -1,4 +1,4 @@
-#include "Markdown.hpp"
+#include "Tokenizer.hpp"
 
 #include <istream>
 #include <memory>
@@ -34,12 +34,12 @@ std::unique_ptr<TokenCharacter> MarkdownTokenizer::tokenize_character()
 
 std::unique_ptr<TokenNumber> MarkdownTokenizer::tokenize_number()
 {
-  std::ios_base::iostate original_states = stream_.rdstate();
+  std::istream::pos_type original_state = snapshot();
   int number;
   stream_ >> number;
   if (!stream_.good())
   {
-    stream_.clear(original_states);
+    rollback(original_state);
     return nullptr;
   }
   return std::unique_ptr<TokenNumber>(new TokenNumber(number));
@@ -47,7 +47,7 @@ std::unique_ptr<TokenNumber> MarkdownTokenizer::tokenize_number()
 
 std::unique_ptr<TokenSpace> MarkdownTokenizer::tokenize_space()
 {
-  std::ios_base::iostate original_states = stream_.rdstate();
+  std::istream::pos_type original_state = snapshot();
   if (ignore_single_domainant_space() == EXIT_SUCCESS)
     return std::unique_ptr<TokenSpace>(new TokenSpace());
   std::string spaces;
@@ -59,7 +59,7 @@ std::unique_ptr<TokenSpace> MarkdownTokenizer::tokenize_space()
   }
   if (spaces.empty())
   {
-    stream_.clear(original_states);
+    rollback(original_state);
     return nullptr;
   }
   return std::unique_ptr<TokenSpace>(new TokenSpace(spaces));
@@ -104,18 +104,18 @@ std::unique_ptr<TokenWord> MarkdownTokenizer::tokenize_word()
 
 int MarkdownTokenizer::ignore_single_domainant_space()
 {
-  std::ios_base::iostate original_states = stream_.rdstate();
+  std::istream::pos_type original_state = snapshot();
   char character;
   stream_.get(character);
   if (!stream_.good() || !settings_.is_dominant_space(character))
   {
-    stream_.clear(original_states);
+    rollback(original_state);
     return EXIT_FAILURE;
   }
   character = stream_.peek();
   if (!stream_.good() || settings_.is_space(character))
   {
-    stream_.clear(original_states);
+    rollback(original_state);
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

@@ -5,7 +5,7 @@
 
 #include "Parser/Tokens.hpp"
 #include "Parser/Tokenizer.hpp"
-#include "Parser/Tokenizer/Markdown/Settings.hpp" 
+#include "Parser/Markdown/Tokenizer/Settings.hpp" 
 
 class MarkdownTokenizer : public Tokenizer
 {

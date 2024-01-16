@@ -30,8 +30,9 @@ TOKENIZER_SRC:= \
 	Markdown/Parser/Token/Symbol.cpp \
 	Markdown/Parser/Token/Word.cpp \
 	Markdown/Parser/Tokenizer.cpp \
-	Markdown/Parser/Tokenizer/Markdown.cpp \
-	Markdown/Parser/Tokenizer/Markdown/Settings.cpp
+	Markdown/Parser/Markdown/Tokenizer/Settings.cpp \
+	Markdown/Parser/Markdown/Tokenizer.cpp \
+	Markdown/Parser/Markdown/Parser.cpp
 ELEMENT_SRC:= \
 	Markdown/Element/Atom/Character.cpp \
 	Markdown/Element/Atom/Number.cpp \
