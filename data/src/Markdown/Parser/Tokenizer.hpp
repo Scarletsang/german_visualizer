@@ -18,7 +18,6 @@ class Tokenizer
     virtual std::unique_ptr<TokenSpace> tokenize_space() = 0;
     virtual std::unique_ptr<TokenSymbol> tokenize_symbol() = 0;
     virtual std::unique_ptr<TokenWord> tokenize_word() = 0;
-    virtual std::unique_ptr<Token> tokenize() = 0;
 
     const std::istream& stream() const;
   

@@ -21,8 +21,9 @@ class MarkdownTokenizer : public Tokenizer
     virtual std::unique_ptr<TokenSpace> tokenize_space() override;
     virtual std::unique_ptr<TokenSymbol> tokenize_symbol() override;
     virtual std::unique_ptr<TokenWord> tokenize_word() override;
-    virtual std::unique_ptr<Token> tokenize() override;
 
   protected:
     MarkdownTokenizerSettings settings_;
+
+    int ignore_single_domainant_space();
 };

@@ -7,11 +7,15 @@ TOKEN-SPACE
 
 Document := *[ Section ] | eof
 Section := Header | Body | Header Body
-Header := TOKEN-'#' Paragraph
-Body := [ Paragraph | Sentence ] [ Body ]
-Paragraph := [ Sentence ] [ Paragraph ]
-Sentence := ( Word | Character | Number ) [ Space Sentence ]
+Header := TOKEN-'#' Paragraph Delimiter
+Body := [ Paragraph | Sentence | Word | Character | Word ] [ Body ]
+Paragraph := Sentence [ Paragraph ] Delimiter
+Sentence := ( Word | Punctuation | Number ) [ Space Sentence ] Fullstop
+Delimiter := Newline | eof
+Newline := TOKEN-CHAR
+Punctuation := TOKEN-CHAR
+Fullstop := TOKEN-CHAR
 Word := TOKEN-WORD
 Character := TOKEN-CHAR
 Number := TOKEN-NUMBER
-Space := TOKEN-SPACE | ' '
+Space := TOKEN-SPACE | TOKEN-DOMINANT-SPACE
