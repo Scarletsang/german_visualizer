@@ -32,6 +32,7 @@ TOKENIZER_SRC:= \
 	Parser/Tokenizer.cpp \
 	Parser/Markdown/Tokenizer/Settings.cpp \
 	Parser/Markdown/Tokenizer.cpp \
+	Parser/Markdown/Parser/Error.cpp \
 	Parser/Markdown/Parser.cpp
 ELEMENT_SRC:= \
 	Element/Atom/Character.cpp \

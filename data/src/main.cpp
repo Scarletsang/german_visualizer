@@ -100,7 +100,6 @@ std::shared_ptr<Document> CreateDocumentFromFile(char* filename)
   MarkdownParser parser = MarkdownParser(tokenizer);
   std::shared_ptr<Document> document = parser.parse_document();
   input_file.close();
-  std::cout << document->data().size() << std::endl;
   return document;
 }
 

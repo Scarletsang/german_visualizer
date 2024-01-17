@@ -29,6 +29,7 @@ class Tokenizer
 
     virtual std::streampos snapshot() const;
     virtual void  rollback(std::streampos position);
+    virtual void  clear();
     virtual void  debug();
   
   protected:

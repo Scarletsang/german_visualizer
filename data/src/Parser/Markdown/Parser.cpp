@@ -16,13 +16,13 @@ std::shared_ptr<Document> MarkdownParser::parse_document()
   std::shared_ptr<MarkdownElement>  element;
   while (!is_eof())
   {
-    std::shared_ptr<MarkdownElement> section = parse_section();
+    ParserResult<Section> section = parse_section(0);
     if (section)
     {
-      document->add_element(section);
-      continue;
+      document->add_element(section.value());
+      continue ;
     }
-    element = parse_element_delimiter();
+    element = parse_element_delimiter(0);
     if (element)
     {
       document->add_element(element);
@@ -33,81 +33,47 @@ std::shared_ptr<Document> MarkdownParser::parse_document()
   return document;
 }
 
-std::shared_ptr<Section> MarkdownParser::parse_section()
+MarkdownParser::ParserResult<Section> MarkdownParser::parse_section(Level min_level)
 {
-  std::cout << "what: ";
-  tokenizer_.debug();
-  std::istream::pos_type original_state = tokenizer_.snapshot();
-  std::shared_ptr<Title> title = parse_title();
+  tokenizer_.clear();
+  ParserResult<Title> title = parse_title(min_level);
   if (!title)
-  {
-    std::cout << "what failed 1" << std::endl;
-    return nullptr;
-  }
-  MarkdownParser::MarkdownElements body = parse_body(title->level());
-  if (body.empty())
-  {
-    std::cout << "what failed 2" << std::endl;
-    tokenizer_.rollback(original_state);
-    return nullptr;
-  }
-  std::shared_ptr<Section> section = CreateSection(title);
-  section->add_elements(body);
-  std::cout << "what end: ";
-  tokenizer_.debug();
-  return section;
-}
-
-MarkdownParser::MarkdownElements MarkdownParser::parse_body(int level)
-{
-  MarkdownElements  elements;
+    return ParserResult<Section>::Error(title.error());
+  peek_element_end(true);
+  MarkdownParser::MarkdownElements body;
   while (!is_eof())
   {
-    std::istream::pos_type original_state = tokenizer_.snapshot();
-    std::shared_ptr<MarkdownElement> element = parse_element_delimiter();
+    std::shared_ptr<MarkdownElement> element = parse_element_delimiter(title.value()->level());
     if (element)
-    {
-      std::shared_ptr<Section> section = std::dynamic_pointer_cast<Section>(element);
-      if (section && section->title()->level() <= level)
-      {
-        tokenizer_.rollback(original_state);
-        return elements;
-      }
-      elements.push_back(element);
-    }
+      body.push_back(element);
     else
       break;
   }
-  return elements;
+  std::shared_ptr<Section> section = CreateSection(title.value());
+  section->add_elements(body);
+  return section;
 }
 
-std::shared_ptr<Title>  MarkdownParser::parse_title()
+MarkdownParser::ParserResult<Title>  MarkdownParser::parse_title(Level min_level)
 {
-  std::cout << "title: ";
-  tokenizer_.debug();
   std::istream::pos_type original_state = tokenizer_.snapshot();
   std::unique_ptr<TokenSymbol> hashes = tokenizer_.tokenize_symbol();
-  if (!hashes || hashes->data() != '#')
+  if (!hashes || (hashes->data() != '#'))
   {
-    std::cout << "title failed 1" << std::endl;
     tokenizer_.rollback(original_state);
-    return nullptr;
+    return ParserResult<Title>::Error(MarkdownParserError::kSyntaxError);
   }
-  if (!parse_space())
+  else if ((hashes->level() <= min_level))
   {
-    std::cout << "title failed 2" << std::endl;
     tokenizer_.rollback(original_state);
-    return nullptr;
+    return ParserResult<Title>::Error(MarkdownParserError::kTooLowLevel);
   }
   std::shared_ptr<Paragraph> paragraph = parse_paragraph();
   if (!paragraph)
   {
-    std::cout << "title failed 3" << std::endl;
     tokenizer_.rollback(original_state);
-    return nullptr;
+    return ParserResult<Title>::Error(MarkdownParserError::kSyntaxError);
   }
-  std::cout << "title end: ";
-  tokenizer_.debug();
   return CreateTitle(hashes->level(), paragraph);
 }
 
@@ -121,24 +87,22 @@ std::shared_ptr<Paragraph>  MarkdownParser::parse_paragraph()
       break;
     paragraph->add_element(sentence);
     if (peek_element_end(false) == EXIT_SUCCESS)
-    {
-      std::cout << "no way" << std::endl;
       break;
-    }
   }
-  std::cout << "p" << paragraph->data().size() << ": ";
-  tokenizer_.debug();
   if (paragraph->data().empty())
     return nullptr;
   return paragraph;
 }
 
-std::shared_ptr<MarkdownElement> MarkdownParser::parse_element()
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element(Level min_level)
 {
+  tokenizer_.clear();
   {
-    std::shared_ptr<Section> section = parse_section();
+    ParserResult<Section> section = parse_section(min_level);
     if (section)
-      return section;
+      return section.value();
+    else if (section.error() == MarkdownParserError::kTooLowLevel)
+      return nullptr;
   }
   {
     std::shared_ptr<Paragraph> paragraph = parse_paragraph();
@@ -170,10 +134,10 @@ std::shared_ptr<MarkdownElement> MarkdownParser::parse_element()
   return nullptr;
 }
 
-std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter()
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter(Level min_level)
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
-  std::shared_ptr<MarkdownElement> element = parse_element();
+  std::shared_ptr<MarkdownElement> element = parse_element(min_level);
   if (!element)
     return nullptr;
   if (peek_element_end(true) == EXIT_FAILURE)
@@ -241,14 +205,12 @@ std::shared_ptr<Sentence>   MarkdownParser::parse_sentence()
     second_state = tokenizer_.snapshot();
   }
   std::shared_ptr<Character> fullstop = parse_fullstop();
-  std::cout << "sentence: " << (fullstop ? fullstop->data() : '8') << std::endl;
-  tokenizer_.debug();
   if (fullstop)
   {
     sentence->add_element(fullstop);
     return sentence;
   }
-  if (!sentence->data().empty())
+  else if (!sentence->data().empty())
     return sentence;
   tokenizer_.rollback(original_state);
   return nullptr;
@@ -320,7 +282,6 @@ std::shared_ptr<Character>  MarkdownParser::parse_fullstop()
   std::unique_ptr<TokenCharacter> token_punctuation = tokenizer_.tokenize_sentence_end();
   if (token_punctuation)
     return CreateCharacter(token_punctuation->data());
-  std::cout << "fullstop failed" << std::endl;
   return nullptr;
 }
 

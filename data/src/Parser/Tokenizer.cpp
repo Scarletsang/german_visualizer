@@ -10,6 +10,11 @@ const std::istream& Tokenizer::stream() const
   return stream_;
 }
 
+void  Tokenizer::clear()
+{
+  stream_.clear();
+}
+
 std::streampos Tokenizer::snapshot() const
 {
   return stream_.tellg();

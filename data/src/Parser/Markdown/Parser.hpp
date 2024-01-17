@@ -2,29 +2,36 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 
-#include "Parser/Tokenizer.hpp"
+#include "Common/Result.hpp"
 #include "Elements.hpp"
+#include "Parser/Tokenizer.hpp"
+#include "Parser/Markdown/Parser/Error.h"
 
 class MarkdownParser
 {
   public:
     using MarkdownElements = std::vector<std::shared_ptr<MarkdownElement> >;
+    using Level = int;
+    
+    template <typename T>
+    using ParserResult = Result<std::shared_ptr<T>, MarkdownParserError>;
+
     MarkdownParser(Tokenizer& tokenizer);
     MarkdownParser(const MarkdownParser& object) = delete;
     virtual ~MarkdownParser();
     MarkdownParser& operator=(const MarkdownParser& other) = delete;
 
     std::shared_ptr<Document> parse_document();
-    std::shared_ptr<Section>  parse_section();
-    MarkdownElements parse_body(int level);
-    std::shared_ptr<Title>    parse_title();
-    std::shared_ptr<Paragraph>  parse_paragraph();
+    ParserResult<Section>  parse_section(Level min_level);
+    ParserResult<Title>  parse_title(Level min_level);
 
-    std::shared_ptr<MarkdownElement> parse_element();
-    std::shared_ptr<MarkdownElement> parse_element_delimiter();
+    std::shared_ptr<MarkdownElement> parse_element(Level min_level);
+    std::shared_ptr<MarkdownElement> parse_element_delimiter(Level min_level);
     int peek_element_end(bool consume);
 
+    std::shared_ptr<Paragraph>  parse_paragraph();
     std::shared_ptr<Sentence>   parse_sentence();
     std::shared_ptr<MarkdownElement>  parse_sentence_element();
 

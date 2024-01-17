@@ -60,7 +60,6 @@ std::unique_ptr<TokenCharacter> MarkdownTokenizer::tokenize_sentence_end()
   stream_.get(character);
   if (stream_.eof())
     return nullptr;
-  std::cout << "Sentence end: " << character << std::endl;
   return std::unique_ptr<TokenCharacter>(new TokenCharacter(character));
 }
 
@@ -142,9 +141,10 @@ std::unique_ptr<TokenWord> MarkdownTokenizer::tokenize_word()
       stream_.unget();
       break;
     }
-    word += character;
+    if (stream_.good())
+      word += character;
   }
-  if (word.empty() || (word.size() == 1 && word[0] == '0'))
+  if (word.empty())
     return nullptr;
   return std::unique_ptr<TokenWord>(new TokenWord(word));
 }
