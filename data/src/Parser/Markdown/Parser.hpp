@@ -7,16 +7,11 @@
 #include "Common/Result.hpp"
 #include "Elements.hpp"
 #include "Parser/Tokenizer.hpp"
-#include "Parser/Markdown/Parser/Error.h"
 
 class MarkdownParser
 {
   public:
     using MarkdownElements = std::vector<std::shared_ptr<MarkdownElement> >;
-    using Level = int;
-    
-    template <typename T>
-    using ParserResult = Result<std::shared_ptr<T>, MarkdownParserError>;
 
     MarkdownParser(Tokenizer& tokenizer);
     MarkdownParser(const MarkdownParser& object) = delete;
@@ -24,11 +19,10 @@ class MarkdownParser
     MarkdownParser& operator=(const MarkdownParser& other) = delete;
 
     std::shared_ptr<Document> parse_document();
-    ParserResult<Section>  parse_section(Level min_level);
-    ParserResult<Title>  parse_title(Level min_level);
+    std::shared_ptr<Title>  parse_title();
 
-    std::shared_ptr<MarkdownElement> parse_element(Level min_level);
-    std::shared_ptr<MarkdownElement> parse_element_delimiter(Level min_level);
+    std::shared_ptr<MarkdownElement>  parse_element();
+    std::shared_ptr<MarkdownElement>  parse_element_delimiter();
     int peek_element_end(bool consume);
 
     std::shared_ptr<Paragraph>  parse_paragraph();

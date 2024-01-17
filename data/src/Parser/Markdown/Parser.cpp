@@ -16,63 +16,28 @@ std::shared_ptr<Document> MarkdownParser::parse_document()
   std::shared_ptr<MarkdownElement>  element;
   while (!is_eof())
   {
-    ParserResult<Section> section = parse_section(0);
-    if (section)
-    {
-      document->add_element(section.value());
-      continue ;
-    }
-    element = parse_element_delimiter(0);
-    if (element)
-    {
-      document->add_element(element);
-      continue;
-    }
-    break;
+    element = parse_element_delimiter();
+    if (!element)
+      break;
+    document->add_element(element);
   }
   return document;
 }
 
-MarkdownParser::ParserResult<Section> MarkdownParser::parse_section(Level min_level)
-{
-  tokenizer_.clear();
-  ParserResult<Title> title = parse_title(min_level);
-  if (!title)
-    return ParserResult<Section>::Error(title.error());
-  peek_element_end(true);
-  MarkdownParser::MarkdownElements body;
-  while (!is_eof())
-  {
-    std::shared_ptr<MarkdownElement> element = parse_element_delimiter(title.value()->level());
-    if (element)
-      body.push_back(element);
-    else
-      break;
-  }
-  std::shared_ptr<Section> section = CreateSection(title.value());
-  section->add_elements(body);
-  return section;
-}
-
-MarkdownParser::ParserResult<Title>  MarkdownParser::parse_title(Level min_level)
+std::shared_ptr<Title>  MarkdownParser::parse_title()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
   std::unique_ptr<TokenSymbol> hashes = tokenizer_.tokenize_symbol();
   if (!hashes || (hashes->data() != '#'))
   {
     tokenizer_.rollback(original_state);
-    return ParserResult<Title>::Error(MarkdownParserError::kSyntaxError);
-  }
-  else if ((hashes->level() <= min_level))
-  {
-    tokenizer_.rollback(original_state);
-    return ParserResult<Title>::Error(MarkdownParserError::kTooLowLevel);
+    return nullptr;
   }
   std::shared_ptr<Paragraph> paragraph = parse_paragraph();
   if (!paragraph)
   {
     tokenizer_.rollback(original_state);
-    return ParserResult<Title>::Error(MarkdownParserError::kSyntaxError);
+    return nullptr;
   }
   return CreateTitle(hashes->level(), paragraph);
 }
@@ -94,15 +59,13 @@ std::shared_ptr<Paragraph>  MarkdownParser::parse_paragraph()
   return paragraph;
 }
 
-std::shared_ptr<MarkdownElement> MarkdownParser::parse_element(Level min_level)
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element()
 {
   tokenizer_.clear();
   {
-    ParserResult<Section> section = parse_section(min_level);
-    if (section)
-      return section.value();
-    else if (section.error() == MarkdownParserError::kTooLowLevel)
-      return nullptr;
+    std::shared_ptr<Title> title = parse_title();
+    if (title)
+      return title;
   }
   {
     std::shared_ptr<Paragraph> paragraph = parse_paragraph();
@@ -118,6 +81,11 @@ std::shared_ptr<MarkdownElement> MarkdownParser::parse_element(Level min_level)
     }
   }
   {
+    std::shared_ptr<Number> number = parse_number();
+    if (number)
+      return number;
+  }
+  {
     std::shared_ptr<Word> word = parse_word();
     if (word)
     {
@@ -126,21 +94,14 @@ std::shared_ptr<MarkdownElement> MarkdownParser::parse_element(Level min_level)
       return word;
     }
   }
-  {
-    std::shared_ptr<Number> number = parse_number();
-    if (number)
-      return number;
-  }
   return nullptr;
 }
 
-std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter(Level min_level)
+std::shared_ptr<MarkdownElement> MarkdownParser::parse_element_delimiter()
 {
   std::istream::pos_type original_state = tokenizer_.snapshot();
-  std::shared_ptr<MarkdownElement> element = parse_element(min_level);
-  if (!element)
-    return nullptr;
-  if (peek_element_end(true) == EXIT_FAILURE)
+  std::shared_ptr<MarkdownElement> element = parse_element();
+  if (!element || (peek_element_end(true) == EXIT_FAILURE))
   {
     tokenizer_.rollback(original_state);
     return nullptr;
@@ -168,7 +129,7 @@ int  MarkdownParser::peek_element_end(bool consume)
   }
   if (ignore_newline() == EXIT_SUCCESS)
   {
-    while (ignore_newline() == EXIT_SUCCESS)
+    while (!tokenizer_.stream().eof() && (ignore_newline() == EXIT_SUCCESS))
       ;
     if (!consume)
       tokenizer_.rollback(original_state);
@@ -218,20 +179,25 @@ std::shared_ptr<Sentence>   MarkdownParser::parse_sentence()
 
 std::shared_ptr<MarkdownElement>   MarkdownParser::parse_sentence_element()
 {
+  tokenizer_.clear();
   {
     std::shared_ptr<Character> punctuation = parse_punctuation();
     if (punctuation)
       return punctuation;
   }
   {
-    std::shared_ptr<Word> word = parse_word();
-    if (word)
-      return word;
-  }
-  {
     std::shared_ptr<Number> number = parse_number();
     if (number)
       return number;
+  }
+  {
+    std::shared_ptr<Word> word = parse_word();
+    if (word)
+    {
+      if (word->data().size() == 1)
+        return std::make_shared<Character>(word->data()[0]);
+      return word;
+    }
   }
   return nullptr;
 }

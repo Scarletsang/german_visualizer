@@ -5,12 +5,10 @@ TOKEN-CHAR
 TOKEN-NUMBER
 TOKEN-SPACE
 
-Document := (Section | ElementD) [ Document ] | eof
-    Element := Section | Paragraph | Sentence | Word | Character | Number
+Document := ElementD [ Document ] | eof
+    Element := Title | Paragraph | Sentence | Word | Character | Number
     ElementD := Element ElementEnd
     ElementEnd := Newline [ ElementEnd ] | eof
-Section := Title [ ElementEnd ] Body
-    Body := ElementD [ Body ] # not Title with equal or higher level
 Title := TOKEN-'#' Space Paragraph
 Paragraph := Sentence [ Paragraph ]
 Sentence := (Space | SentenceElement) [ Sentence ] ( Fullstop | ElementEnd(peak) )

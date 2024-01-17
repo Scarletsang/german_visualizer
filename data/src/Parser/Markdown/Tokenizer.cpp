@@ -38,12 +38,15 @@ std::unique_ptr<TokenCharacter> MarkdownTokenizer::tokenize_character(char c)
 std::unique_ptr<TokenCharacter> MarkdownTokenizer::tokenize_punctuation(char c)
 {
   stream_.clear();
-  if (!settings_.is_punctuation(c))
-    return nullptr;
-  else if (c != kNoCriteria && stream_.peek() != c)
+  char character = stream_.peek();
+  if (c == kNoCriteria)
+  {
+    if (!settings_.is_punctuation(character))
+      return nullptr;
+  }
+  else if (!(settings_.is_punctuation(c) && (character == c)))
     return nullptr;
   stream_.clear();
-  char character;
   stream_.get(character);
   if (stream_.eof())
     return nullptr;

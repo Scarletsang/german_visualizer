@@ -6,7 +6,7 @@
 /*   By: htsang <htsang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/12 14:35:42 by htsang            #+#    #+#             */
-/*   Updated: 2024/01/17 00:34:41 by htsang           ###   ########.fr       */
+/*   Updated: 2024/01/17 03:17:09 by htsang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,10 +127,16 @@ class Result
 /////////////////////////////////////////////////////
 
 template <typename T, typename Err>
-Result<T,Err> Result<T,Err>::Ok(T value) { return Result<T,Err>(value); }
+Result<T,Err> Result<T,Err>::Ok(T value)
+{
+  return Result<T,Err>(value);
+}
 
 template <typename T, typename Err>
-Result<T,Err> Result<T,Err>::Error(Err error) { return Result<T,Err>(error, 0); }
+Result<T,Err> Result<T,Err>::Error(Err error)
+{
+  return Result<T,Err>(error, 0);
+}
 
 template <typename T, typename Err>
 Result<T,Err>::Result(T value) : is_ok_(true), value_(value) {}
