@@ -1,29 +1,13 @@
 # German learning visualizer
 
-This is a proof of concept to create flexible data visualization. It is also an attempt to store data close to the part that updates the UI.
+> A Website powered by C++
 
-This is the expecting result:
+The goal is let Web Assembly handle the actual logic of the website, and the website is merely a visualization of the data structure. I always wanted to store my ideas in a really flexible way, so I decided to write the core data structure, including a Markdown parser and a JSON encoder in C++. This project is merely a project where I can write a lot of parser (I love it) and a investigation into WebAssembly, also a project that I do when I procrastinate.
 
-## UI object
+What I have currently in mind is the following:
 
-```javascript
+1. The data stored on the frontend is managed by the C++ core.
+2. User can write Markdown on the website, and the C++ core can real time parse the user input and change the data structure. The C++ code is designed to be flexible, so in theory one can also write a different parser to parse their language into my data structure.
+3. Different encoders (currently only JSON) can allow the data being transferred to the backend or other places.
+4. One of the encoder is to encode the data structure back into some kind of visualization in the frontend.
 
-// The objects represent data that are floating in space
-const ui = new UI(objects);
-
-// render the ui with different perspective
-ui.run(new NormalPerspective());
-ui.run(new MapPerspective());
-// Update the ui with new objects
-ui.update(new_objects);
-
-```
-
-## Perspective
-
-A perspective is necessary to access the data. Each data is wrapped with a perspective.
-
-```javascript
-const perspective = new Perspective();
-perspective.action1(data);
-```
