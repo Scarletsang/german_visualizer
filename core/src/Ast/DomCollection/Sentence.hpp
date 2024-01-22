@@ -4,14 +4,14 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Atom/Word.hpp"
-#include "Element/Atom/Number.hpp"
-#include "Element/Atom/Character.hpp"
-#include "Element/Atom/Delimiter.hpp"
+#include "Ast/Element.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/Atom/Word.hpp"
+#include "Ast/Atom/Number.hpp"
+#include "Ast/Atom/Character.hpp"
+#include "Ast/Atom/Delimiter.hpp"
 
-class Sentence : public Collection<MarkdownElement>
+class Sentence : public DomCollection<MarkdownElement>
 {
   public:
     Sentence();

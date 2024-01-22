@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Encoder.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Collection/Sentence.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/DomCollection/Sentence.hpp"
 
-class Paragraph : public Collection<Sentence>
+class Paragraph : public DomCollection<Sentence>
 {
   public:
     Paragraph();

@@ -4,23 +4,23 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
-#include "Element/Atom/Word.hpp"
-#include "Element/Atom/Number.hpp"
-#include "Element/Atom/Character.hpp"
+#include "Ast/Element.hpp"
+#include "Ast/Atom/Word.hpp"
+#include "Ast/Atom/Number.hpp"
+#include "Ast/Atom/Character.hpp"
 
 Sentence::Sentence()
-  : Collection<MarkdownElement>() {}
+  : DomCollection<MarkdownElement>() {}
 
 Sentence::Sentence(const Sentence& object)
-  : Collection<MarkdownElement>(object) {}
+  : DomCollection<MarkdownElement>(object) {}
 
 Sentence::~Sentence() {}
 
 Sentence& Sentence::operator=(const Sentence& other)
 {
   if (this != &other)
-    Collection<MarkdownElement>::operator=(other);
+    DomCollection<MarkdownElement>::operator=(other);
   return *this;
 }
 

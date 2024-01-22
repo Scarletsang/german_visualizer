@@ -4,18 +4,18 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Title.hpp"
+#include "Ast/Element.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/Title.hpp"
 
 Section::Section()
-  : Collection<MarkdownElement>(), title_() {}
+  : DomCollection<MarkdownElement>(), title_() {}
 
 Section::Section(std::shared_ptr<Title> title)
-  : Collection<MarkdownElement>(), title_(title) {}
+  : DomCollection<MarkdownElement>(), title_(title) {}
 
 Section::Section(const Section& object)
-  : Collection<MarkdownElement>(object), title_(object.title_) {}
+  : DomCollection<MarkdownElement>(object), title_(object.title_) {}
 
 Section::~Section() {}
 
@@ -23,7 +23,7 @@ Section& Section::operator=(const Section& other)
 {
   if (this != &other)
   {
-    Collection<MarkdownElement>::operator=(other);
+    DomCollection<MarkdownElement>::operator=(other);
     title_ = other.title_;
   }
   return *this;

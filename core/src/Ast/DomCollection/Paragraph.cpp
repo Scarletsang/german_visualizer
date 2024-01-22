@@ -1,21 +1,21 @@
 #include "Paragraph.hpp"
 
 #include "Encoder.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Collection/Sentence.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/DomCollection/Sentence.hpp"
 
 Paragraph::Paragraph()
-  : Collection<Sentence>() {}
+  : DomCollection<Sentence>() {}
 
 Paragraph::Paragraph(const Paragraph& object)
-  : Collection<Sentence>(object) {}
+  : DomCollection<Sentence>(object) {}
 
 Paragraph::~Paragraph() {}
 
 Paragraph& Paragraph::operator=(const Paragraph& other)
 {
   if (this != &other)
-    Collection<Sentence>::operator=(other);
+    DomCollection<Sentence>::operator=(other);
   return *this;
 }
 

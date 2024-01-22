@@ -3,15 +3,15 @@
 #include <string>
 #include <memory>
 
-#include "Element/Atom/Character.hpp"
-#include "Element/Atom/Delimiter.hpp"
-#include "Element/Atom/Word.hpp"
-#include "Element/Atom/Number.hpp"
-#include "Element/Collection/Paragraph.hpp"
-#include "Element/Collection/Document.hpp"
-#include "Element/Collection/Section.hpp"
-#include "Element/Collection/Sentence.hpp"
-#include "Element/Title.hpp"
+#include "Ast/Atom/Character.hpp"
+#include "Ast/Atom/Delimiter.hpp"
+#include "Ast/Atom/Word.hpp"
+#include "Ast/Atom/Number.hpp"
+#include "Ast/DomCollection/Paragraph.hpp"
+#include "Ast/DomCollection/Document.hpp"
+#include "Ast/DomCollection/Section.hpp"
+#include "Ast/DomCollection/Sentence.hpp"
+#include "Ast/Title.hpp"
 
 std::shared_ptr<Character>  CreateCharacter(char c)
 {
@@ -49,7 +49,7 @@ std::shared_ptr<Title>      CreateTitle(int level, std::shared_ptr<Paragraph> pa
   return std::make_shared<Title>(level, paragraph);
 }
 
-// // collection
+// // DomCollection
 std::shared_ptr<Paragraph>  CreateParagraph()
 {
   return std::make_shared<Paragraph>();

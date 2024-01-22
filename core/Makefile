@@ -34,15 +34,15 @@ TOKENIZER_SRC:= \
 	Parser/Markdown/Tokenizer.cpp \
 	Parser/Markdown/Parser.cpp
 ELEMENT_SRC:= \
-	Element/Atom/Character.cpp \
-	Element/Atom/Number.cpp \
-	Element/Atom/Delimiter.cpp \
-	Element/Atom/Word.cpp \
-	Element/Collection/Paragraph.cpp \
-	Element/Collection/Section.cpp \
-	Element/Collection/Document.cpp \
-	Element/Collection/Sentence.cpp \
-	Element/Title.cpp
+	Ast/Atom/Character.cpp \
+	Ast/Atom/Number.cpp \
+	Ast/Atom/Delimiter.cpp \
+	Ast/Atom/Word.cpp \
+	Ast/DomCollection/Paragraph.cpp \
+	Ast/DomCollection/Section.cpp \
+	Ast/DomCollection/Document.cpp \
+	Ast/DomCollection/Sentence.cpp \
+	Ast/Title.cpp
 ENCODER_SRC:= \
 	Encoder/Json/Settings.cpp \
 	Encoder/Json.cpp

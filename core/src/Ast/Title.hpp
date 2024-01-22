@@ -3,8 +3,8 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
-#include "Element/Collection.hpp"
+#include "Ast/Element.hpp"
+#include "Ast/DomCollection.hpp"
 
 class Title : public MarkdownElement
 {

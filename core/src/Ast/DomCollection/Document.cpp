@@ -1,21 +1,21 @@
 #include "Document.hpp"
 
 #include "Encoder.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Element.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/Element.hpp"
 
 Document::Document()
-  : Collection<MarkdownElement>() {}
+  : DomCollection<MarkdownElement>() {}
 
 Document::Document(const Document& object)
-  : Collection<MarkdownElement>(object) {}
+  : DomCollection<MarkdownElement>(object) {}
 
 Document::~Document() {}
 
 Document& Document::operator=(const Document& other)
 {
   if (this != &other)
-    Collection<MarkdownElement>::operator=(other);
+    DomCollection<MarkdownElement>::operator=(other);
   return *this;
 }
 

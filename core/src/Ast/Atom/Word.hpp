@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "Element/Atom.hpp"
+#include "Ast/Atom.hpp"
 #include "Encoder.hpp"
 
 class Word : public Atom<std::string>

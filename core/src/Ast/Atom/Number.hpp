@@ -3,7 +3,7 @@
 #include <iostream>
 #include <optional>
 
-#include "Element/Atom.hpp"
+#include "Ast/Atom.hpp"
 #include "Encoder.hpp"
 
 namespace atom

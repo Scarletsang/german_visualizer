@@ -16,7 +16,7 @@ class Number;
 class Sentence;
 class Title;
 
-// collection
+// DomCollection
 class Paragraph;
 class Section;
 class Document;

@@ -3,7 +3,7 @@
 #include <string>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
+#include "Ast/Element.hpp"
 
 template <typename T>
 class Atom : public MarkdownElement

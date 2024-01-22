@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Encoder.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Element.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/Element.hpp"
 
-class Document : public Collection<MarkdownElement>
+class Document : public DomCollection<MarkdownElement>
 {
   public:
     Document();

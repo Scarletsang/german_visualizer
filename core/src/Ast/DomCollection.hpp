@@ -4,18 +4,18 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
+#include "Ast/Element.hpp"
 
 template <typename T>
-class Collection : public MarkdownElement
+class DomCollection : public MarkdownElement
 {
   public:
     using element = std::shared_ptr<T>;
-    Collection();
-    Collection(const Collection& object);
-    virtual ~Collection();
+    DomCollection();
+    DomCollection(const DomCollection& object);
+    virtual ~DomCollection();
 
-    Collection& operator=(const Collection& other);
+    DomCollection& operator=(const DomCollection& other);
 
     virtual int encode(Encoder& encoder) const override;
     virtual bool  is_atom() const override;
@@ -35,17 +35,17 @@ class Collection : public MarkdownElement
 /////////////////////////////////////////////////////
 
 template <typename T>
-Collection<T>::Collection() : data_() {}
+DomCollection<T>::DomCollection() : data_() {}
 
 template <typename T>
-Collection<T>::Collection(const Collection& object)
+DomCollection<T>::DomCollection(const DomCollection& object)
   : data_(object.data_) {}
 
 template <typename T>
-Collection<T>::~Collection() {}
+DomCollection<T>::~DomCollection() {}
 
 template <typename T>
-Collection<T>& Collection<T>::operator=(const Collection& other)
+DomCollection<T>& DomCollection<T>::operator=(const DomCollection& other)
 {
   if (this != &other)
     data_ = other.data_;
@@ -53,26 +53,26 @@ Collection<T>& Collection<T>::operator=(const Collection& other)
 }
 
 template <typename T>
-int Collection<T>::encode(Encoder& encoder) const
+int DomCollection<T>::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
 
 template <typename T>
-bool  Collection<T>::is_atom() const
+bool  DomCollection<T>::is_atom() const
 {
   return false;
 }
 
 template <typename T>
-int  Collection<T>::add_element(element element)
+int  DomCollection<T>::add_element(element element)
 {
   data_.push_back(element);
   return EXIT_SUCCESS;
 }
 
 template <typename T>
-int  Collection<T>::add_elements(std::vector<element>& elements)
+int  DomCollection<T>::add_elements(std::vector<element>& elements)
 {
   for (auto& element : elements)
     data_.push_back(element);
@@ -80,13 +80,13 @@ int  Collection<T>::add_elements(std::vector<element>& elements)
 }
 
 template <typename T>
-const std::vector<typename Collection<T>::element>& Collection<T>::data() const
+const std::vector<typename DomCollection<T>::element>& DomCollection<T>::data() const
 {
   return data_;
 }
 
 template <typename T>
-std::vector<typename Collection<T>::element>& Collection<T>::data()
+std::vector<typename DomCollection<T>::element>& DomCollection<T>::data()
 {
   return data_;
 }

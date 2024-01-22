@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Element/Atom.hpp"
+#include "Ast/Atom.hpp"
 #include "Encoder.hpp"
 
 class Character : public Atom<char>

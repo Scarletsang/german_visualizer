@@ -4,11 +4,11 @@
 #include <memory>
 
 #include "Encoder.hpp"
-#include "Element/Element.hpp"
-#include "Element/Collection.hpp"
-#include "Element/Title.hpp"
+#include "Ast/Element.hpp"
+#include "Ast/DomCollection.hpp"
+#include "Ast/Title.hpp"
 
-class Section : public Collection<MarkdownElement>
+class Section : public DomCollection<MarkdownElement>
 {
   public:
     Section();
