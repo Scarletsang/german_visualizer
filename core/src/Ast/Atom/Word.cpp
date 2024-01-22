@@ -22,8 +22,3 @@ int Word::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool  Word::is_atom() const
-{
-  return true;
-}

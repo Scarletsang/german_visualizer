@@ -23,8 +23,3 @@ int Document::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool  Document::is_atom() const
-{
-  return false;
-}

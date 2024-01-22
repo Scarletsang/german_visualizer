@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Encoder.hpp"
+#include "Ast/Type.hpp"
 #include "Ast/Element.hpp"
 #include "Ast/DomCollection.hpp"
 
@@ -18,7 +19,7 @@ class Title : public MarkdownElement
     Title& operator=(const Title& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
+    virtual ElementType  type() const override;
 
     int level() const;
     std::shared_ptr<Paragraph> data() const;

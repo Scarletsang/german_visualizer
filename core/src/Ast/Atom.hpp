@@ -3,6 +3,7 @@
 #include <string>
 
 #include "Encoder.hpp"
+#include "Ast/Type.hpp"
 #include "Ast/Element.hpp"
 
 template <typename T>
@@ -17,7 +18,7 @@ class Atom : public MarkdownElement
     Atom& operator=(const Atom& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
+    virtual ElementType  type() const override;
 
     T& data();
     const T& data() const;
@@ -55,9 +56,9 @@ int Atom<T>::encode(Encoder& encoder) const
 }
 
 template <typename T>
-bool Atom<T>::is_atom() const
+ElementType Atom<T>::type() const
 {
-  return true;
+  return ElementType::kAtom;
 }
 
 template <typename T>

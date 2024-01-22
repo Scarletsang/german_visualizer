@@ -23,8 +23,3 @@ int Paragraph::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool  Paragraph::is_atom() const
-{
-  return false;
-}

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "Encoder.hpp"
+#include "Ast/Type.hpp"
 #include "Ast/Element.hpp"
 
 template <typename T>
@@ -18,7 +19,7 @@ class DomCollection : public MarkdownElement
     DomCollection& operator=(const DomCollection& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
+    virtual ElementType  type() const override;
 
     virtual int  add_element(element element);
     virtual int  add_elements(std::vector<element>& elements);
@@ -59,9 +60,9 @@ int DomCollection<T>::encode(Encoder& encoder) const
 }
 
 template <typename T>
-bool  DomCollection<T>::is_atom() const
+ElementType  DomCollection<T>::type() const
 {
-  return false;
+  return ElementType::kDomCollection;
 }
 
 template <typename T>

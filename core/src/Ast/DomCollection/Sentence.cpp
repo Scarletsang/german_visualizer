@@ -29,11 +29,6 @@ int Sentence::encode(Encoder& encoder) const
   return encoder.encode(*this);
 }
 
-bool  Sentence::is_atom() const
-{
-  return false;
-}
-
 int  Sentence::add_element(std::shared_ptr<Word> word)
 {
   data_.push_back(word);

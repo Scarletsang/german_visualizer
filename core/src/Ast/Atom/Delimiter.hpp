@@ -16,5 +16,4 @@ class Delimiter : public Atom<std::string>
     Delimiter& operator=(const Delimiter& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 };

@@ -19,7 +19,6 @@ class Section : public DomCollection<MarkdownElement>
     Section& operator=(const Section& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 
     void  set_title(std::shared_ptr<Title> title);
 

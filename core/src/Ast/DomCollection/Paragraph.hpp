@@ -14,5 +14,4 @@ class Paragraph : public DomCollection<Sentence>
     Paragraph& operator=(const Paragraph& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 };

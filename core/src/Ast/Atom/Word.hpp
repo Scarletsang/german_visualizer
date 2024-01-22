@@ -16,5 +16,4 @@ class Word : public Atom<std::string>
     Word& operator=(const Word& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 };

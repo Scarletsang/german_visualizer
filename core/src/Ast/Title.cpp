@@ -33,9 +33,9 @@ int Title::encode(Encoder& encoder) const
   return encoder.encode(*this);
 }
 
-bool Title::is_atom() const
+ElementType Title::type() const
 {
-  return false;
+  return ElementType::kDomCollection;
 }
 
 int Title::level() const

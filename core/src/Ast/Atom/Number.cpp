@@ -80,8 +80,3 @@ int Number::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool Number::is_atom() const
-{
-  return true;
-}

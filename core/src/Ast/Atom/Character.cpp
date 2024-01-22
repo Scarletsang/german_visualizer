@@ -22,8 +22,3 @@ int Character::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool  Character::is_atom() const
-{
-  return true;
-}

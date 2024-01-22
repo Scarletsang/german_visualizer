@@ -52,5 +52,4 @@ class Number : public Atom<atom::Number>
     Number& operator=(const Number& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 };

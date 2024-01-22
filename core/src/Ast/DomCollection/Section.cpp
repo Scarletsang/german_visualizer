@@ -34,11 +34,6 @@ int Section::encode(Encoder& encoder) const
   return encoder.encode(*this);
 }
 
-bool  Section::is_atom() const
-{
-  return false;
-}
-
 void  Section::set_title(std::shared_ptr<Title> title)
 {
   title_ = title;

@@ -21,7 +21,6 @@ class Sentence : public DomCollection<MarkdownElement>
     Sentence& operator=(const Sentence& other);
 
     virtual int encode(Encoder& encoder) const override;
-    virtual bool  is_atom() const override;
 
     int  add_element(std::shared_ptr<Word> word);
     int  add_element(std::shared_ptr<Number> number);

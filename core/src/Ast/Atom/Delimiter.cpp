@@ -22,8 +22,3 @@ int Delimiter::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
 }
-
-bool  Delimiter::is_atom() const
-{
-  return true;
-}
