@@ -11,7 +11,7 @@ class Atom : public MarkdownElement
 {
   public:
     Atom();
-    Atom(T Atom);
+    Atom(T data);
     Atom(const Atom& object);
     virtual ~Atom();
 
@@ -19,7 +19,7 @@ class Atom : public MarkdownElement
 
     virtual int encode(Encoder& encoder) const override;
     virtual ElementType  type() const override;
-
+  
     T& data();
     const T& data() const;
 

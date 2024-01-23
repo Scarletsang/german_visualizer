@@ -22,17 +22,17 @@ class JsonEncoder : public Encoder
     virtual int encode(const Word& word) override;
     virtual int encode(const Number& number) override;
 
-    // group of atoms
-    virtual int encode(const Sentence& sentence) override;
     // level and one line
     virtual int encode(const Title& title) override;
-
-    // group of lines
+    virtual int encode(const Sentence& sentence) override;
     virtual int encode(const Paragraph& paragraph) override;
-    // group of a title, and a group of elements with the same level
     virtual int encode(const Section& section) override;
-    // group of sections
     virtual int encode(const Document& document) override;
+
+    virtual int encode(const DirectedEdge& edge) override;
+    virtual int encode(const UndirectedEdge& edge) override;
+    virtual int encode(const WeightedEdge& edge) override;
+    virtual int encode(const Graph& graph) override;
 
     virtual int encode(const MarkdownElement& element) override;
 

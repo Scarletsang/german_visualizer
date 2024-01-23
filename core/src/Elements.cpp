@@ -13,6 +13,10 @@
 #include "Ast/DomCollection/Sentence.hpp"
 #include "Ast/Title.hpp"
 
+//////////////////////////////////
+////////////   Atom   ////////////
+//////////////////////////////////
+
 std::shared_ptr<Character>  CreateCharacter(char c)
 {
   return std::make_shared<Character>(c);
@@ -38,18 +42,20 @@ std::shared_ptr<Number>     CreateNumber(float number)
   return std::make_shared<Number>(number);
 }
 
-// // composite
-std::shared_ptr<Sentence>   CreateSentence()
-{
-  return std::make_shared<Sentence>();
-}
+///////////////////////////////////////////
+////////////   DomCollection   ////////////
+///////////////////////////////////////////
 
 std::shared_ptr<Title>      CreateTitle(int level, std::shared_ptr<Paragraph> paragraph)
 {
   return std::make_shared<Title>(level, paragraph);
 }
 
-// // DomCollection
+std::shared_ptr<Sentence>   CreateSentence()
+{
+  return std::make_shared<Sentence>();
+}
+
 std::shared_ptr<Paragraph>  CreateParagraph()
 {
   return std::make_shared<Paragraph>();

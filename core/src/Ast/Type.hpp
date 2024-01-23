@@ -3,5 +3,6 @@
 enum ElementType
 {
   kAtom,
-  kDomCollection
+  kDomCollection,
+  kGraphCollection
 };

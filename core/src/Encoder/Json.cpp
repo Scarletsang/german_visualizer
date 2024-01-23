@@ -79,23 +79,6 @@ int JsonEncoder::encode(const Number& number)
   return EXIT_SUCCESS;
 }
 
-int JsonEncoder::encode(const Sentence& sentence)
-{
-  output_ << '{';
-  {
-    settings_.increase_level();
-    write_newline_indent();
-    write_pair("type", "sentence", true);
-    write_newline_indent();
-    write_key("data");
-    encode(sentence.data());
-    settings_.decrease_level();
-  }
-  write_newline_indent();
-  output_ << '}';
-  return EXIT_SUCCESS;
-}
-
 int JsonEncoder::encode(const Title& title)
 {
   output_ << '{';
@@ -107,6 +90,23 @@ int JsonEncoder::encode(const Title& title)
     write_pair("level", title.level(), true);
     write_newline_indent();
     write_pair("data", title.data(), false);
+    settings_.decrease_level();
+  }
+  write_newline_indent();
+  output_ << '}';
+  return EXIT_SUCCESS;
+}
+
+int JsonEncoder::encode(const Sentence& sentence)
+{
+  output_ << '{';
+  {
+    settings_.increase_level();
+    write_newline_indent();
+    write_pair("type", "sentence", true);
+    write_newline_indent();
+    write_key("data");
+    encode(sentence.data());
     settings_.decrease_level();
   }
   write_newline_indent();
@@ -164,6 +164,30 @@ int JsonEncoder::encode(const Document& document)
   }
   write_newline_indent();
   output_ << '}';
+  return EXIT_SUCCESS;
+}
+
+int JsonEncoder::encode(const DirectedEdge&)
+{
+  throw std::runtime_error("JsonEncoder::encode(const DirectedEdge&): not implemented");
+  return EXIT_SUCCESS;
+}
+
+int JsonEncoder::encode(const UndirectedEdge&)
+{
+  throw std::runtime_error("JsonEncoder::encode(const UndirectedEdge&): not implemented");
+  return EXIT_SUCCESS;
+}
+
+int JsonEncoder::encode(const WeightedEdge&)
+{
+  throw std::runtime_error("JsonEncoder::encode(const WeightedEdge&): not implemented");
+  return EXIT_SUCCESS;
+}
+
+int JsonEncoder::encode(const Graph&)
+{
+  throw std::runtime_error("JsonEncoder::encode(const Graph&): not implemented");
   return EXIT_SUCCESS;
 }
 

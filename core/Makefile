@@ -33,20 +33,28 @@ TOKENIZER_SRC:= \
 	Parser/Markdown/Tokenizer/Settings.cpp \
 	Parser/Markdown/Tokenizer.cpp \
 	Parser/Markdown/Parser.cpp
-ELEMENT_SRC:= \
+ATOM_SRC:= \
 	Ast/Atom/Character.cpp \
 	Ast/Atom/Number.cpp \
 	Ast/Atom/Delimiter.cpp \
-	Ast/Atom/Word.cpp \
+	Ast/Atom/Word.cpp
+DOM_COLLECTION_SRC:= \
+	Ast/Title.cpp \
+	Ast/DomCollection/Sentence.cpp \
 	Ast/DomCollection/Paragraph.cpp \
 	Ast/DomCollection/Section.cpp \
-	Ast/DomCollection/Document.cpp \
-	Ast/DomCollection/Sentence.cpp \
-	Ast/Title.cpp
+	Ast/DomCollection/Document.cpp
+GRAPH_SRC:= \
+	Ast/GraphCollection/Edge.cpp \
+	Ast/GraphCollection/Edge/Directed.cpp \
+	Ast/GraphCollection/Edge/Undirected.cpp \
+	Ast/GraphCollection/Tagged/Weighted.cpp \
+	Ast/Graph.cpp
+AST_SRC:= $(ATOM_SRC) $(DOM_COLLECTION_SRC) $(GRAPH_SRC)
 ENCODER_SRC:= \
 	Encoder/Json/Settings.cpp \
 	Encoder/Json.cpp
-SRC:= $(MAIN_SRC) $(TOKENIZER_SRC) $(ELEMENT_SRC) $(ENCODER_SRC)
+SRC:= $(MAIN_SRC) $(TOKENIZER_SRC) $(AST_SRC) $(ENCODER_SRC)
 
 ####################################
 ######     Library files     #######
