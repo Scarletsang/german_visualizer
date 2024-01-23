@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 
-#include "Elements.hpp"
+#include "Ast.hpp"
 
 JsonEncoder::JsonEncoder(std::ostream& output, const JsonEncoderSettings& settings)
   : output_(output), settings_(settings) {}

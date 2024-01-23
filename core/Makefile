@@ -21,7 +21,6 @@ INCLUDE_DIR:= src
 # contatenate them in the SRC variable like this:
 
 MAIN_SRC:= \
-	Elements.cpp \
 	main.cpp
 TOKENIZER_SRC:= \
 	Parser/Token/Character.cpp \
@@ -50,7 +49,9 @@ GRAPH_SRC:= \
 	Ast/GraphCollection/Edge/Undirected.cpp \
 	Ast/GraphCollection/Tagged/Weighted.cpp \
 	Ast/Graph.cpp
-AST_SRC:= $(ATOM_SRC) $(DOM_COLLECTION_SRC) $(GRAPH_SRC)
+AST_SRC:= \
+	Ast.cpp \
+	$(ATOM_SRC) $(DOM_COLLECTION_SRC) $(GRAPH_SRC)
 ENCODER_SRC:= \
 	Encoder/Json/Settings.cpp \
 	Encoder/Json.cpp
