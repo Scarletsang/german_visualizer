@@ -57,12 +57,12 @@ int  Sentence::add_element(std::shared_ptr<MarkdownElement> element)
 {
   if (dynamic_cast<Word*>(element.get()))
     add_element(std::static_pointer_cast<Word>(element));
-  else if (dynamic_cast<Number*>(element.get()))
-    add_element(std::static_pointer_cast<Number>(element));
-  else if (dynamic_cast<Character*>(element.get()))
-    add_element(std::static_pointer_cast<Character>(element));
   else if (dynamic_cast<Delimiter*>(element.get()))
     add_element(std::static_pointer_cast<Delimiter>(element));
+  else if (dynamic_cast<Character*>(element.get()))
+    add_element(std::static_pointer_cast<Character>(element));
+  else if (dynamic_cast<Number*>(element.get()))
+    add_element(std::static_pointer_cast<Number>(element));
   else
     return EXIT_FAILURE;
   return EXIT_SUCCESS;
