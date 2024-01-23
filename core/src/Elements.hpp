@@ -7,7 +7,7 @@
 #include "Ast/Atom/Delimiter.hpp"
 #include "Ast/Atom/Word.hpp"
 #include "Ast/Atom/Number.hpp"
-#include "Ast/Title.hpp"
+#include "Ast/DomCollection/Title.hpp"
 #include "Ast/DomCollection/Sentence.hpp"
 #include "Ast/DomCollection/Paragraph.hpp"
 #include "Ast/DomCollection/Section.hpp"

@@ -11,7 +11,7 @@
 #include "Ast/DomCollection/Document.hpp"
 #include "Ast/DomCollection/Section.hpp"
 #include "Ast/DomCollection/Sentence.hpp"
-#include "Ast/Title.hpp"
+#include "Ast/DomCollection/Title.hpp"
 
 //////////////////////////////////
 ////////////   Atom   ////////////

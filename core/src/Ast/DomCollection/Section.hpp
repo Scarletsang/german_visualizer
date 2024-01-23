@@ -6,7 +6,7 @@
 #include "Encoder.hpp"
 #include "Ast/Element.hpp"
 #include "Ast/DomCollection.hpp"
-#include "Ast/Title.hpp"
+#include "Ast/DomCollection/Title.hpp"
 
 class Section : public DomCollection<MarkdownElement>
 {
