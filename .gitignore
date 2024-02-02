@@ -4,3 +4,6 @@
 **/leaks_result
 **/*.o
 **/*.d
+src/compiled_core.*
+.clangd
+.vscode
