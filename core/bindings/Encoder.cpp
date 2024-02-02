@@ -7,7 +7,7 @@
 using namespace emscripten;
 
 EMSCRIPTEN_BINDINGS(encoder) {
-    class_<Encoder, base<Encoder>>("Encoder")
+    class_<Encoder>("Encoder")
         .function("encode_character", select_overload<int(const Character&)>(&Encoder::encode), pure_virtual())
         .function("encode_word", select_overload<int(const Word&)>(&Encoder::encode), pure_virtual())
         .function("encode_delimiter", select_overload<int(const Delimiter&)>(&Encoder::encode), pure_virtual())
