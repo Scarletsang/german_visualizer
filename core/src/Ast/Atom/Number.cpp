@@ -32,6 +32,18 @@ namespace atom
     return (*this);
   }
 
+  void Number::set_integer(int number)
+  {
+    this->type_ = kInteger;
+    this->data_.integer = number;
+  }
+
+  void Number::set_float(float number)
+  {
+    this->type_ = kFloat;
+    this->data_.floats = number;
+  }
+
   std::optional<int> Number::get_integer() const
   {
     if (this->type_ == kInteger)
@@ -64,6 +76,9 @@ Number::Number(int number)
 
 Number::Number(float number)
   : Atom<atom::Number>(atom::Number(number)) {}
+
+Number::Number(atom::Number number)
+  : Atom<atom::Number>(number) {}  
 
 Number::Number(const Number& object)
   : Atom<atom::Number>(object) {}

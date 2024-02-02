@@ -29,6 +29,9 @@ namespace atom
 
       Number& operator=(const Number& other);
 
+      void  set_integer(int number);
+      void  set_float(float number);
+
       std::optional<int>  get_integer() const;
       std::optional<float>  get_float() const;
 
@@ -46,6 +49,7 @@ class Number : public Atom<atom::Number>
     Number();
     Number(int number);
     Number(float number);
+    Number(atom::Number number);
     Number(const Number& object);
     virtual ~Number();
 
