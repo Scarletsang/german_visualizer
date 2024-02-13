@@ -26,6 +26,7 @@ ATOM_SRC:= \
 	Ast/Atom/Delimiter.cpp \
 	Ast/Atom/Word.cpp
 DOM_COLLECTION_SRC:= \
+	Ast/DomCollection.cpp \
 	Ast/DomCollection/Title.cpp \
 	Ast/DomCollection/Sentence.cpp \
 	Ast/DomCollection/Paragraph.cpp \

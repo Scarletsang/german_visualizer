@@ -1,24 +1,39 @@
 #include "Word.hpp"
 
 Word::Word()
-  : Atom<std::string>() {}
+  : data_() {}
 
 Word::Word(const std::string& word)
-  : Atom<std::string>(word) {}
+  : data_(word) {}
 
 Word::Word(const Word& object)
-  : Atom<std::string>(object) {}
+  : data_(object.data_) {}
 
 Word::~Word() {}
 
 Word& Word::operator=(const Word& other)
 {
   if (this != &other)
-    Atom<std::string>::operator=(other);
+    data_ = other.data_;
   return *this;
 }
 
 int Word::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
+}
+
+ElementType Word::type() const
+{
+  return ElementType::kAtom;
+}
+
+void  Word::set_data(const std::string& word)
+{
+  data_ = word;
+}
+
+const std::string& Word::data() const
+{
+  return data_;
 }

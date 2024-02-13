@@ -10,17 +10,17 @@
 #include "Ast/Atom/Character.hpp"
 
 Sentence::Sentence()
-  : DomCollection<MarkdownElement>() {}
+  : DomCollection() {}
 
 Sentence::Sentence(const Sentence& object)
-  : DomCollection<MarkdownElement>(object) {}
+  : DomCollection(object) {}
 
 Sentence::~Sentence() {}
 
 Sentence& Sentence::operator=(const Sentence& other)
 {
   if (this != &other)
-    DomCollection<MarkdownElement>::operator=(other);
+    DomCollection::operator=(other);
   return *this;
 }
 

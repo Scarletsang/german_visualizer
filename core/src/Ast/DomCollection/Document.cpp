@@ -5,17 +5,17 @@
 #include "Ast/Element.hpp"
 
 Document::Document()
-  : DomCollection<MarkdownElement>() {}
+  : DomCollection() {}
 
 Document::Document(const Document& object)
-  : DomCollection<MarkdownElement>(object) {}
+  : DomCollection(object) {}
 
 Document::~Document() {}
 
 Document& Document::operator=(const Document& other)
 {
   if (this != &other)
-    DomCollection<MarkdownElement>::operator=(other);
+    DomCollection::operator=(other);
   return *this;
 }
 

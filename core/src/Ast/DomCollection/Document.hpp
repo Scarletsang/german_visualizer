@@ -4,7 +4,7 @@
 #include "Ast/DomCollection.hpp"
 #include "Ast/Element.hpp"
 
-class Document : public DomCollection<MarkdownElement>
+class Document : public DomCollection
 {
   public:
     Document();

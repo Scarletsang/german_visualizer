@@ -4,7 +4,7 @@
 #include "Ast/DomCollection.hpp"
 #include "Ast/DomCollection/Sentence.hpp"
 
-class Paragraph : public DomCollection<Sentence>
+class Paragraph : public DomCollection
 {
   public:
     Paragraph();
@@ -14,4 +14,6 @@ class Paragraph : public DomCollection<Sentence>
     Paragraph& operator=(const Paragraph& other);
 
     virtual int encode(Encoder& encoder) const override;
+
+    const std::vector<std::shared_ptr<Sentence>>& data() const;
 };

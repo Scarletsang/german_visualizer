@@ -1,24 +1,39 @@
 #include "Character.hpp"
 
 Character::Character()
-  : Atom<char>() {}
+  : data_(0) {}
 
 Character::Character(char character)
-  : Atom<char>(character) {}
+  : data_(character) {}
 
 Character::Character(const Character& object)
-  : Atom<char>(object) {}
+  : data_(object.data_) {}
 
 Character::~Character() {}
 
 Character& Character::operator=(const Character& other)
 {
   if (this != &other)
-    Atom<char>::operator=(other);
+    data_ = other.data_;
   return *this;
 }
 
 int Character::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
+}
+
+ElementType Character::type() const
+{
+  return ElementType::kAtom;
+}
+
+void Character::set_data(char character)
+{
+  data_ = character;
+}
+
+const char& Character::data() const
+{
+  return data_;
 }

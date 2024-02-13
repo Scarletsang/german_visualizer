@@ -3,7 +3,7 @@
 #include <iostream>
 #include <optional>
 
-#include "Ast/Atom.hpp"
+#include "Ast/Element.hpp"
 #include "Encoder.hpp"
 
 namespace atom
@@ -43,7 +43,7 @@ namespace atom
 
 }; // namespace atom
 
-class Number : public Atom<atom::Number>
+class Number : public MarkdownElement
 {
   public:
     Number();
@@ -56,4 +56,11 @@ class Number : public Atom<atom::Number>
     Number& operator=(const Number& other);
 
     virtual int encode(Encoder& encoder) const override;
+    virtual ElementType  type() const override;
+
+    void  set_data(atom::Number number);
+    const atom::Number& data() const;
+  
+  protected:
+    atom::Number  data_;
 };

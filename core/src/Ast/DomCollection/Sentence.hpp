@@ -11,7 +11,7 @@
 #include "Ast/Atom/Character.hpp"
 #include "Ast/Atom/Delimiter.hpp"
 
-class Sentence : public DomCollection<MarkdownElement>
+class Sentence : public DomCollection
 {
   public:
     Sentence();

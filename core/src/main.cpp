@@ -111,6 +111,7 @@ int main(int argc, char** argv)
   else
     document = CreateDocumentFromFile(argv[1]);
   JsonEncoderSettings settings;
+  // settings.toggle_compact();
   JsonEncoder encoder(std::cout, settings);
   encoder.encode(*document);
   std::cout << std::endl;

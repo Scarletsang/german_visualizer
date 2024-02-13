@@ -9,13 +9,13 @@
 #include "Ast/DomCollection/Title.hpp"
 
 Section::Section()
-  : DomCollection<MarkdownElement>(), title_() {}
+  : DomCollection(), title_() {}
 
 Section::Section(std::shared_ptr<Title> title)
-  : DomCollection<MarkdownElement>(), title_(title) {}
+  : DomCollection(), title_(title) {}
 
 Section::Section(const Section& object)
-  : DomCollection<MarkdownElement>(object), title_(object.title_) {}
+  : DomCollection(object), title_(object.title_) {}
 
 Section::~Section() {}
 
@@ -23,7 +23,7 @@ Section& Section::operator=(const Section& other)
 {
   if (this != &other)
   {
-    DomCollection<MarkdownElement>::operator=(other);
+    DomCollection::operator=(other);
     title_ = other.title_;
   }
   return *this;

@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "Ast/Atom.hpp"
+#include "Ast/Element.hpp"
 #include "Encoder.hpp"
 
-class Word : public Atom<std::string>
+class Word : public MarkdownElement
 {
   public:
     Word();
@@ -16,4 +16,11 @@ class Word : public Atom<std::string>
     Word& operator=(const Word& other);
 
     virtual int encode(Encoder& encoder) const override;
+    virtual ElementType  type() const override;
+
+    void  set_data(const std::string& word);
+    const std::string& data() const;
+  
+  protected:
+    std::string  data_;
 };

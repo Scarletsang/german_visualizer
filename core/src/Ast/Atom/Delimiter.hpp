@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "Ast/Atom.hpp"
+#include "Ast/Element.hpp"
 #include "Encoder.hpp"
 
-class Delimiter : public Atom<std::string>
+class Delimiter : public MarkdownElement
 {
   public:
     Delimiter();
@@ -16,4 +16,11 @@ class Delimiter : public Atom<std::string>
     Delimiter& operator=(const Delimiter& other);
 
     virtual int encode(Encoder& encoder) const override;
+    virtual ElementType  type() const override;
+
+    void  set_data(const std::string& delimiter);
+    const std::string& data() const;
+  
+  protected:
+    std::string  data_;
 };

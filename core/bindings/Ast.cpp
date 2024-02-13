@@ -34,12 +34,10 @@ class MarkdownElementWrapper : public wrapper<MarkdownElement>
     }
 };
 
-using StandardDomCollection = DomCollection<MarkdownElement>;
-
-class StandardDomCollectionWrapper : public wrapper<StandardDomCollection>
+class DomCollectionWrapper : public wrapper<DomCollection>
 {
   public:
-    EMSCRIPTEN_WRAPPER(StandardDomCollectionWrapper);
+    EMSCRIPTEN_WRAPPER(DomCollectionWrapper);
 
     virtual int encode(Encoder&) const override
     {
@@ -69,24 +67,21 @@ EMSCRIPTEN_BINDINGS(ast)
         .constructor<char>()
         .function("encode", &Character::encode)
         .function("type", &Character::type)
-        .function("data", select_overload<const char&() const>(&Character::data))
-        .function("writable_data", select_overload<char&()>(&Character::data));
+        .property("data", &Character::data, &Character::set_data);
     
     class_<Delimiter, base<MarkdownElement>>("AstDelimiter")
         .constructor<>()
         .constructor<const std::string&>()
         .function("encode", &Delimiter::encode)
         .function("type", &Delimiter::type)
-        .function("data", select_const(&Delimiter::data), allow_raw_pointers())
-        .function("writable_data", select_overload<std::string&()>(&Delimiter::data), allow_raw_pointers());
+        .property("data", &Delimiter::data, &Delimiter::set_data);
 
     class_<Word, base<MarkdownElement>>("AstWord")
         .constructor<>()
         .constructor<const std::string&>()
         .function("encode", &Word::encode)
         .function("type", &Word::type)
-        .function("data", select_const(&Word::data), allow_raw_pointers())
-        .function("writable_data", select_overload<std::string&()>(&Word::data), allow_raw_pointers());
+        .property("data", &Word::data, &Word::set_data);
 
     class_<atom::Number>("Number")
         .constructor<>()
@@ -100,8 +95,7 @@ EMSCRIPTEN_BINDINGS(ast)
         .constructor<atom::Number>()
         .function("encode", &Number::encode)
         .function("type", &Number::type)
-        .function("data", select_const(&Number::data), allow_raw_pointers())
-        .function("writable_data", select_overload<atom::Number&()>(&Number::data), allow_raw_pointers());
+        .property("data", &Number::data, &Number::set_data);
 
     class_<Title, base<MarkdownElement>>("AstTitle")
         .constructor<>()
@@ -112,39 +106,34 @@ EMSCRIPTEN_BINDINGS(ast)
         .property("data", &Title::data, &Title::set_data)
         .property("level", &Title::level, &Title::set_level);
 
-    class_<Paragraph, base<MarkdownElement>>("AstParagraph")
+    class_<DomCollection, base<MarkdownElement>>("AstDomCollection")
         .constructor<>()
-        .function("encode", &Paragraph::encode)
-        .function("type", &Paragraph::type)
-        .function("add_element", select_overload<int(std::shared_ptr<Sentence>)>(&Paragraph::add_element))
-        .function("add_elements", &Paragraph::add_elements)
-        .function("data", select_const(&Paragraph::data), allow_raw_pointers())
-        .function("writable_data", select_overload<std::vector<std::shared_ptr<Sentence>>&()>(&Paragraph::data), allow_raw_pointers());
+        .function("encode", &DomCollection::encode)
+        .function("type", &DomCollection::type)
+        .function("add_element", select_overload<int(std::shared_ptr<MarkdownElement>)>(&DomCollection::add_element))
+        .function("add_elements", &DomCollection::add_elements)
+        .property("data", &DomCollection::data, &DomCollection::set_data)
+        .allow_subclass<DomCollectionWrapper>("StandardDomCollectionWrapper");
 
-    class_<StandardDomCollection, base<MarkdownElement>>("AstDomCollection")
-        .constructor<>()
-        .function("encode", &StandardDomCollection::encode)
-        .function("type", &StandardDomCollection::type)
-        .function("add_element", select_overload<int(std::shared_ptr<MarkdownElement>)>(&StandardDomCollection::add_element))
-        .function("add_elements", &StandardDomCollection::add_elements)
-        .function("data", select_const(&StandardDomCollection::data), allow_raw_pointers())
-        .function("writable_data", select_overload<std::vector<std::shared_ptr<MarkdownElement>>&()>(&StandardDomCollection::data), allow_raw_pointers())
-        .allow_subclass<StandardDomCollectionWrapper>("StandardDomCollectionWrapper");
-
-    class_<Sentence, base<StandardDomCollection>>("AstSentence")
+    class_<Sentence, base<DomCollection>>("AstSentence")
         .constructor<>()
         .function("encode", &Sentence::encode)
         .function("type", &Sentence::type)
         .function("add_element", select_overload<int(std::shared_ptr<MarkdownElement>)>(&Sentence::add_element));
 
-    class_<Section, base<StandardDomCollection>>("AstSection")
+    class_<Paragraph, base<DomCollection>>("AstParagraph")
+        .constructor<>()
+        .function("encode", &Paragraph::encode)
+        .function("type", &Paragraph::type);
+
+    class_<Section, base<DomCollection>>("AstSection")
         .constructor<>()
         .constructor<std::shared_ptr<Title>>()
         .function("encode", &Section::encode)
         .function("type", &Section::type)
         .property("title", &Section::title, &Section::set_title);
 
-    class_<Document, base<StandardDomCollection>>("AstDocument")
+    class_<Document, base<DomCollection>>("AstDocument")
         .constructor<>()
         .function("encode", &Document::encode)
         .function("type", &Document::type);

@@ -69,29 +69,44 @@ namespace atom
 }; // namespace atom
 
 Number::Number()
-  : Atom<atom::Number>() {}
+  : data_() {}
 
 Number::Number(int number)
-  : Atom<atom::Number>(atom::Number(number)) {}
+  : data_(atom::Number(number)) {}
 
 Number::Number(float number)
-  : Atom<atom::Number>(atom::Number(number)) {}
+  : data_(atom::Number(number)) {}
 
 Number::Number(atom::Number number)
-  : Atom<atom::Number>(number) {}  
+  : data_(number) {}
 
 Number::Number(const Number& object)
-  : Atom<atom::Number>(object) {}
+  : data_(object.data_) {}
 
 Number::~Number() {}
 
 Number& Number::operator=(const Number& other)
 {
-  Atom<atom::Number>::operator=(other);
+  data_ = other.data_;
   return (*this);
 }
 
 int Number::encode(Encoder& encoder) const
 {
   return encoder.encode(*this);
+}
+
+ElementType Number::type() const
+{
+  return ElementType::kAtom;
+}
+
+void  Number::set_data(atom::Number number)
+{
+  data_ = number;
+}
+
+const atom::Number& Number::data() const
+{
+  return data_;
 }

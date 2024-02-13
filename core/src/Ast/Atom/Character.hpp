@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Ast/Atom.hpp"
+#include "Ast/Element.hpp"
 #include "Encoder.hpp"
 
-class Character : public Atom<char>
+class Character : public MarkdownElement
 {
   public:
     Character();
@@ -14,4 +14,11 @@ class Character : public Atom<char>
     Character& operator=(const Character& other);
 
     virtual int encode(Encoder& encoder) const override;
+    virtual ElementType  type() const override;
+
+    void  set_data(char character);
+    const char& data() const;
+
+  protected:
+    char  data_;
 };
