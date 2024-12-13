@@ -1,5 +1,5 @@
 CC= clang
-CFLAGS= -pedantic -Wall -Werror -Wextra
+CFLAGS= -pedantic -Wall -Werror -Wextra -std=c23
 LDFLAGS= -pedantic -v -lglfw -lvulkan
 TARGET=core2
 
