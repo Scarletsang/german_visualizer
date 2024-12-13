@@ -115,18 +115,64 @@ struct glass_block
 
 int main(void)
 {
+	lll_arena	temp_arena;
+	lll_arena_init(&temp_arena, LLL_PAGE_SIZE);
+	// Note: Create window
 	glfwInit();
-
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", NULL, NULL);
 
-	lll_u32 extension_count = 0;
-	vkEnumerateInstanceExtensionProperties(NULL, &extension_count, NULL);
-	lll_printf("%u extensions supported\n", extension_count);
+	// Note: Init Vulkan instance
+	VkInstance instance;
+	{
+		VkApplicationInfo app_info = {0};
+		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+		app_info.pApplicationName = "Hello Triangle";
+		app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+		app_info.pEngineName = "No Engine";
+		app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+		app_info.apiVersion = VK_API_VERSION_1_0;
+
+		VkInstanceCreateInfo create_info = {0};
+		create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		create_info.pApplicationInfo = &app_info;
+
+		uint32_t glfw_extension_count = 0;
+		const char** glfw_extensions;
+		glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+
+		// Note: Beginning with the 1.3.216 Vulkan SDK, the VK_KHR_PORTABILITY_subset extension is mandatory. So add this extension here
+		char** required_extensions = lll_arena_alloc(&temp_arena, (glfw_extension_count + 1) * sizeof(char*), 1);
+		for(lll_u32 i = 0; i < glfw_extension_count; i++)
+		{
+			required_extensions[i] = ((char**) glfw_extensions)[i];
+		}
+		required_extensions[glfw_extension_count] = VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME;
+		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+		create_info.enabledExtensionCount = glfw_extension_count + 1;
+		create_info.ppEnabledExtensionNames = (const char**) required_extensions;
+		create_info.enabledLayerCount = 0;
+
+		VkResult res = vkCreateInstance(&create_info, NULL, &instance);
+		if (res == VK_ERROR_INCOMPATIBLE_DRIVER)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to no found compatible Vulkan ICD\n");
+			return 1;
+		}
+		else if (res)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to unknown reasons\n");
+			return 1;
+		}
+		lll_arena_clear(&temp_arena);
+	}
+
 	while(!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 	}
+	vkDestroyInstance(instance, NULL);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

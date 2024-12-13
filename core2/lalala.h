@@ -24,6 +24,8 @@ void	lll_assert_explicit(lll_b8 check, const char* message, int line_number, con
 #define lll_assert(check, message) ((void) 0)
 #endif
 
+#define LLL_PRINT_ERROR(cstring) (write(2, cstring, sizeof(cstring) - 1))
+
 typedef struct
 {
 	char*	data;
