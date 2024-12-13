@@ -150,20 +150,23 @@ lll_b8	lll_string_is_equal(lll_string target, lll_string reference)
 
 void	lll_memcpy(void* dest, void* src, lll_u32 size)
 {
+	lll_u8* dest_ptr = (lll_u8*) dest;
+	lll_u8* src_ptr = (lll_u8*) src;
 	for (lll_u32 i = 0; i < size; i++)
 	{
-		*(lll_u8*) dest = *(lll_u8*) src;
-		dest++;
-		src++;
+		*dest_ptr = *src_ptr;
+		dest_ptr++;
+		src_ptr++;
 	}
 }
 
 void	lll_memset(void* dest, lll_u32 size, char data)
 {
+	lll_i8* dest_ptr = (lll_i8*) dest;
 	for (lll_u32 i = 0; i < size; i++)
 	{
-		*(char*) dest = data;
-		dest++;
+		*dest_ptr = data;
+		dest_ptr++;
 	}
 }
 
@@ -684,7 +687,7 @@ void	lll_arena_split(lll_arena* arena, lll_u32 size, lll_arena* output)
 void*	lll_arena_alloc(lll_arena* arena, lll_u32 size, lll_u32 alignment)
 {
 	lll_assert(((alignment & (alignment - 1)) == 0), "Alignment is not power of two");
-	void*	result = arena->memory + arena->used;
+	lll_u8*	result = arena->memory + arena->used;
 	lll_u64 modulo = (lll_u64)result & (alignment - 1);
 	if (modulo != 0)
 	{
@@ -693,7 +696,7 @@ void*	lll_arena_alloc(lll_arena* arena, lll_u32 size, lll_u32 alignment)
 	}
 	lll_assert((arena->used + size) <= (arena->capacity), "Arena overflow");
 	arena->used += size;
-	return result;
+	return (void*) result;
 }
 
 void	lll_arena_clear(lll_arena* arena)
