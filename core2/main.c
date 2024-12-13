@@ -281,12 +281,20 @@ struct vk_globals
 	VkSwapchainKHR           swapchain;
 	VkImageView*             swapchain_image_views;
 	lll_u32                  swapchain_image_view_size;
+	VkRenderPass             render_pass;
 	VkPipelineLayout         pipeline_layout;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
-	vkDestroyPipelineLayout(globals->logical_device, globals->pipeline_layout, NULL);
+	if (globals->pipeline_layout != VK_NULL_HANDLE)
+	{
+		vkDestroyPipelineLayout(globals->logical_device, globals->pipeline_layout, NULL);
+	}
+	if (globals->render_pass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(globals->logical_device, globals->render_pass, NULL);
+	}
 	for (lll_u32 i = 0; i < globals->swapchain_image_view_size; i++)
 	{
 		vkDestroyImageView(globals->logical_device, globals->swapchain_image_views[i], NULL);
@@ -783,6 +791,44 @@ int main(void)
 		vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
 		munmap(shader_vertex.data, shader_vertex.length);
 		munmap(shader_fragment.data, shader_fragment.length);
+	}
+
+	// Note: Create render pass
+	globals.render_pass = VK_NULL_HANDLE;
+	{
+		VkAttachmentDescription color_attachment = {0};
+    color_attachment.format = swapchain_image_format;
+    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference color_attachment_ref = {0};;
+		color_attachment_ref.attachment = 0;
+		color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {0};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &color_attachment_ref;
+
+		VkRenderPassCreateInfo render_pass_info = {0};
+		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		render_pass_info.attachmentCount = 1;
+		render_pass_info.pAttachments = &color_attachment;
+		render_pass_info.subpassCount = 1;
+		render_pass_info.pSubpasses = &subpass;
+
+		VkResult res = vkCreateRenderPass(globals.logical_device, &render_pass_info, NULL, &globals.render_pass);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create render pass\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
 	}
 
 	while(!glfwWindowShouldClose(globals.window))
