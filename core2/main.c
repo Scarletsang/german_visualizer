@@ -4,6 +4,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3native.h>
+
+#include <vulkan/vulkan_metal.h>
+
 enum glass_block_size_measure_method
 {
 	SIZE_FIT_CHILDREN, // Note: No Paramter
@@ -195,25 +200,38 @@ struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, l
 	return indices;
 }
 
-void vk_cleanup(VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, VkDevice logical_device, GLFWwindow* window)
+struct vk_globals
 {
-	if (logical_device != VK_NULL_HANDLE)
+	GLFWwindow*              window;
+	VkInstance               instance;
+	VkDebugUtilsMessengerEXT debug_messenger;
+	VkSurfaceKHR             surface;
+	VkDevice                 logical_device;
+};
+
+void vk_cleanup(struct vk_globals* globals)
+{
+	if (globals->logical_device != VK_NULL_HANDLE)
 	{
-		vkDestroyDevice(logical_device, NULL);
+		vkDestroyDevice(globals->logical_device, NULL);
 	}
-	if (enable_validation_layers && (debug_messenger != VK_NULL_HANDLE))
+	if (globals->surface != VK_NULL_HANDLE)
 	{
-		PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+		vkDestroySurfaceKHR(globals->instance, globals->surface, NULL);
+	}
+	if (enable_validation_layers && (globals->debug_messenger != VK_NULL_HANDLE))
+	{
+		PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(globals->instance, "vkDestroyDebugUtilsMessengerEXT");
 		if (func != NULL)
 		{
-			func(instance, debug_messenger, NULL);
+			func(globals->instance, globals->debug_messenger, NULL);
 		}
 	}
-	if (instance != VK_NULL_HANDLE)
+	if (globals->instance != VK_NULL_HANDLE)
 	{
-		vkDestroyInstance(instance, NULL);
+		vkDestroyInstance(globals->instance, NULL);
 	}
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(globals->window);
 	glfwTerminate();
 }
 
@@ -221,14 +239,15 @@ int main(void)
 {
 	lll_arena	temp_arena;
 	lll_arena_init(&temp_arena, LLL_PAGE_SIZE);
+	struct vk_globals globals = {0};
 	// Note: Create window
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", NULL, NULL);
+	globals.window = glfwCreateWindow(800, 600, "Vulkan window", NULL, NULL);
 
 	// Note: Init Vulkan instance
-	VkInstance instance = VK_NULL_HANDLE;
+	globals.instance = VK_NULL_HANDLE;
 	{
 		VkApplicationInfo app_info = {0};
 		app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -272,7 +291,7 @@ int main(void)
 			if (!vk_check_validation_layer_support(&temp_arena))
 			{
 				LLL_PRINT_ERROR("Error: Validation layer requested but not avaliable\n");
-				vk_cleanup(VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE, window);
+				vk_cleanup(&globals);
 				return 1;
 			}
 			else
@@ -293,23 +312,23 @@ int main(void)
 			create_info.enabledLayerCount = 0;
 		}
 
-		VkResult res = vkCreateInstance(&create_info, NULL, &instance);
+		VkResult res = vkCreateInstance(&create_info, NULL, &globals.instance);
 		if (res == VK_ERROR_INCOMPATIBLE_DRIVER)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to no found compatible Vulkan ICD\n");
-			vk_cleanup(instance, VK_NULL_HANDLE, VK_NULL_HANDLE, window);
+			vk_cleanup(&globals);
 			return 1;
 		}
 		else if (res)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to unknown reasons\n");
-			vk_cleanup(instance, VK_NULL_HANDLE, VK_NULL_HANDLE, window);
+			vk_cleanup(&globals);
 			return 1;
 		}
 		lll_arena_clear(&temp_arena);
 	}
 	// Note: setup debug messenger
-	VkDebugUtilsMessengerEXT debug_messenger = VK_NULL_HANDLE;
+	globals.debug_messenger = VK_NULL_HANDLE;
 	{
 		VkDebugUtilsMessengerCreateInfoEXT  debug_create_info = {0};
 		debug_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -317,27 +336,42 @@ int main(void)
 		debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		debug_create_info.pfnUserCallback = vk_debug_callback;
 		debug_create_info.pUserData = NULL;
-		PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-		if ((func == NULL) || (func(instance, &debug_create_info, NULL, &debug_messenger) != VK_SUCCESS))
+		PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(globals.instance, "vkCreateDebugUtilsMessengerEXT");
+		if ((func == NULL) || (func(globals.instance, &debug_create_info, NULL, &globals.debug_messenger) != VK_SUCCESS))
 		{
 			LLL_PRINT_ERROR("Warning: Failed to set up messege debugger\n");
 		}
 	}
+	// Note: Create a surface
+	globals.surface = VK_NULL_HANDLE;
+	{
+		VkMetalSurfaceCreateInfoEXT create_info = {0};
+		create_info.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+		create_info.pLayer = glfwGetCocoaWindow(globals.window);
+		VkResult res = vkCreateMetalSurfaceEXT(globals.instance, &create_info, NULL, &globals.surface);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create window surface\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
+	}
+
 	// Note: Find suitable GPU
 	VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 	struct vk_queue_family_indices	queue_family_indices = {0};
 	{
 		lll_u32 device_count = 0;
-		vkEnumeratePhysicalDevices(instance, &device_count, NULL);
+		vkEnumeratePhysicalDevices(globals.instance, &device_count, NULL);
 		if (device_count == 0)
 		{
 			LLL_PRINT_ERROR("Error: Failed to find GPU with Vulkan support\n");
-			vk_cleanup(instance, debug_messenger, VK_NULL_HANDLE, window);
+			vk_cleanup(&globals);
 			return 1;
 		}
 		lll_printf("%u physical device avaliable\n", device_count);
 		VkPhysicalDevice* devices = lll_arena_alloc(&temp_arena, sizeof(VkPhysicalDevice) * device_count, 8);
-		vkEnumeratePhysicalDevices(instance, &device_count, devices);
+		vkEnumeratePhysicalDevices(globals.instance, &device_count, devices);
 		for (lll_u32 i = 0; i < device_count; i++)
 		{
 			lll_b8 is_suitable = LLL_FALSE;
@@ -364,13 +398,13 @@ int main(void)
 		if (physical_device == VK_NULL_HANDLE)
 		{
 			LLL_PRINT_ERROR("Error: Failed to find a suitable GPU\n");
-			vk_cleanup(instance, debug_messenger, VK_NULL_HANDLE, window);
+			vk_cleanup(&globals);
 			return 1;
 		}
 		lll_arena_clear(&temp_arena);
 	}
 	// Note: Set up logical device
-	VkDevice logical_device = VK_NULL_HANDLE;
+	globals.logical_device = VK_NULL_HANDLE;
 	{
 		lll_assert(queue_family_indices.is_valid_graphics_family == LLL_TRUE, "graphics queue family index is not valid");
 		VkDeviceQueueCreateInfo queue_create_info = {0};
@@ -400,23 +434,23 @@ int main(void)
 		}
 
 		lll_assert(physical_device != NULL, "physical device is not valid");
-		VkResult res = vkCreateDevice(physical_device, &create_info, NULL, &logical_device);
+		VkResult res = vkCreateDevice(physical_device, &create_info, NULL, &globals.logical_device);
 		if (res != VK_SUCCESS)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create logical device\n");
-			vk_cleanup(instance, debug_messenger, VK_NULL_HANDLE, window);
+			vk_cleanup(&globals);
 			return 1;
 		}
 	}
 	VkQueue graphics_queue;
 	{
-		vkGetDeviceQueue(logical_device, queue_family_indices.graphics_family_index, 0, &graphics_queue);
+		vkGetDeviceQueue(globals.logical_device, queue_family_indices.graphics_family_index, 0, &graphics_queue);
 	}
 
-	while(!glfwWindowShouldClose(window))
+	while(!glfwWindowShouldClose(globals.window))
 	{
 		glfwPollEvents();
 	}
-	vk_cleanup(instance, debug_messenger, logical_device, window);
+	vk_cleanup(&globals);
 	return 0;
 }
