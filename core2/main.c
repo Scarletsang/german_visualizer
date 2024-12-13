@@ -197,6 +197,10 @@ struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, l
 
 void vk_cleanup(VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, VkDevice logical_device, GLFWwindow* window)
 {
+	if (logical_device != VK_NULL_HANDLE)
+	{
+		vkDestroyDevice(logical_device, NULL);
+	}
 	if (enable_validation_layers && (debug_messenger != VK_NULL_HANDLE))
 	{
 		PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
@@ -208,10 +212,6 @@ void vk_cleanup(VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger, V
 	if (instance != VK_NULL_HANDLE)
 	{
 		vkDestroyInstance(instance, NULL);
-	}
-	if (logical_device != VK_NULL_HANDLE)
-	{
-		vkDestroyDevice(logical_device, NULL);
 	}
 	glfwDestroyWindow(window);
 	glfwTerminate();
