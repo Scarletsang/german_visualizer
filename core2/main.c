@@ -286,10 +286,16 @@ struct vk_globals
 	VkPipeline               pipeline;
 	VkFramebuffer*           swapchain_framebuffers;
 	lll_u32                  swapchain_framebuffer_size;
+	VkCommandPool            command_pool;
+	VkCommandBuffer          command_buffer;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	if (globals->command_pool != VK_NULL_HANDLE)
+	{
+		vkDestroyCommandPool(globals->logical_device, globals->command_pool, NULL);
+	}
 	for (lll_u32 i = 0; i < globals->swapchain_framebuffer_size; i++)
 	{
 		vkDestroyFramebuffer(globals->logical_device, globals->swapchain_framebuffers[i], NULL);
@@ -953,6 +959,37 @@ int main(void)
 				vk_cleanup(&globals);
 				return 1;
 			}
+		}
+	}
+	// Note: Create command pool
+	{
+		VkCommandPoolCreateInfo pool_info = {0};
+		pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		pool_info.queueFamilyIndex = queue_family_indices.graphics_family_index;
+
+		VkResult res = vkCreateCommandPool(globals.logical_device, &pool_info, NULL, &globals.command_pool);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create command pool\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
+	}
+	// Note: Create command buffer
+	{
+		VkCommandBufferAllocateInfo alloc_info = {0};
+		alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		alloc_info.commandPool = globals.command_pool;
+		alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		alloc_info.commandBufferCount = 1;
+
+		VkResult res = vkAllocateCommandBuffers(globals.logical_device, &alloc_info, &globals.command_buffer);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create command buffer\n");
+			vk_cleanup(&globals);
+			return 1;
 		}
 	}
 
