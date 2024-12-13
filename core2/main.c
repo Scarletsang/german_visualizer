@@ -284,10 +284,16 @@ struct vk_globals
 	VkRenderPass             render_pass;
 	VkPipelineLayout         pipeline_layout;
 	VkPipeline               pipeline;
+	VkFramebuffer*           swapchain_framebuffers;
+	lll_u32                  swapchain_framebuffer_size;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	for (lll_u32 i = 0; i < globals->swapchain_framebuffer_size; i++)
+	{
+		vkDestroyFramebuffer(globals->logical_device, globals->swapchain_framebuffers[i], NULL);
+	}
 	if (globals->pipeline != VK_NULL_HANDLE)
 	{
 		vkDestroyPipeline(globals->logical_device, globals->pipeline, NULL);
@@ -922,6 +928,32 @@ int main(void)
 		vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
 		munmap(shader_vertex.data, shader_vertex.length);
 		munmap(shader_fragment.data, shader_fragment.length);
+	}
+	// Note: create framebuffer
+	{
+		globals.swapchain_framebuffers = lll_arena_alloc(&permenant_arena, sizeof(VkFramebuffer) * swapchain_images_size, 8);
+		globals.swapchain_framebuffer_size = swapchain_images_size;
+		for (lll_u32 i = 0; i < globals.swapchain_framebuffer_size; i++)
+		{
+			VkImageView attachments[] = {globals.swapchain_image_views[i]};
+
+			VkFramebufferCreateInfo framebufferInfo = {0};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = globals.render_pass;;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = swapchain_extent.width;
+			framebufferInfo.height = swapchain_extent.height;
+			framebufferInfo.layers = 1;
+
+			VkResult res = vkCreateFramebuffer(globals.logical_device, &framebufferInfo, NULL, globals.swapchain_framebuffers + i);
+			if (res != VK_SUCCESS)
+			{
+				LLL_PRINT_ERROR("Error: Failed to create frame buffer\b");
+				vk_cleanup(&globals);
+				return 1;
+			}
+		}
 	}
 
 	while(!glfwWindowShouldClose(globals.window))
