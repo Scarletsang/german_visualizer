@@ -281,10 +281,10 @@ int main(void)
 				create_info.ppEnabledLayerNames = (const char**) validation_layers;
 
 				debug_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debug_create_info.pfnUserCallback = vk_debug_callback;
-        debug_create_info.pUserData = NULL;
+				debug_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+				debug_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+				debug_create_info.pfnUserCallback = vk_debug_callback;
+				debug_create_info.pUserData = NULL;
 				create_info.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debug_create_info;
 			}
 		}
@@ -327,7 +327,7 @@ int main(void)
 	VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 	struct vk_queue_family_indices	queue_family_indices = {0};
 	{
-		lll_u32 device_count;
+		lll_u32 device_count = 0;
 		vkEnumeratePhysicalDevices(instance, &device_count, NULL);
 		if (device_count == 0)
 		{
@@ -380,25 +380,24 @@ int main(void)
 		queue_create_info.pQueuePriorities = &queue_priority;
 		queue_create_info.queueCount = 1;
 
+		VkPhysicalDeviceFeatures device_features = {0};
 		VkDeviceCreateInfo  create_info = {0};
 		create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		create_info.pQueueCreateInfos = &queue_create_info;
 		create_info.queueCreateInfoCount = 1;
-		VkPhysicalDeviceFeatures device_features = {0};
 		create_info.pEnabledFeatures = &device_features;
 		create_info.enabledExtensionCount = 0;
 
 		// Note: For backward compatibility only. Validation layer on device is no longer supported
-		// if (enable_validation_layers)
-		// {
-		// 	create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char*);
-		// 	create_info.ppEnabledLayerNames = (const char**) validation_layers;
-		// }
-		// else
-		// {
-		// 	create_info.enabledLayerCount = 0;
-		// }
-		create_info.enabledLayerCount = 0;
+		if (enable_validation_layers)
+		{
+			create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char*);
+			create_info.ppEnabledLayerNames = (const char**) validation_layers;
+		}
+		else
+		{
+			create_info.enabledLayerCount = 0;
+		}
 
 		lll_assert(physical_device != NULL, "physical device is not valid");
 		VkResult res = vkCreateDevice(physical_device, &create_info, NULL, &logical_device);
