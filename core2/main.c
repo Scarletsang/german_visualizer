@@ -261,10 +261,16 @@ struct vk_globals
 	VkSurfaceKHR             surface;
 	VkDevice                 logical_device;
 	VkSwapchainKHR           swapchain;
+	VkImageView*             swapchain_image_views;
+	lll_u32                  swapchain_image_view_size;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	for (lll_u32 i = 0; i < globals->swapchain_image_view_size; i++)
+	{
+		vkDestroyImageView(globals->logical_device, globals->swapchain_image_views[i], NULL);
+	}
 	if (globals->swapchain != VK_NULL_HANDLE)
 	{
 		vkDestroySwapchainKHR(globals->logical_device, globals->swapchain, NULL);
@@ -295,8 +301,10 @@ void vk_cleanup(struct vk_globals* globals)
 
 int main(void)
 {
-	lll_arena	temp_arena;
+	static lll_arena	temp_arena;
+	static lll_arena	permenant_arena;
 	lll_arena_init(&temp_arena, LLL_PAGE_SIZE * 16);
+	lll_arena_init(&permenant_arena, LLL_PAGE_SIZE * 16);
 	struct vk_globals globals = {0};
 	// Note: Create window
 	glfwInit();
@@ -646,14 +654,44 @@ int main(void)
 		}
 		lll_arena_clear(&temp_arena);
 		vkGetSwapchainImagesKHR(globals.logical_device, globals.swapchain, &swapchain_images_size, NULL);
-		// TODO: move this to a different arena
-		swapchain_images = lll_arena_alloc(&temp_arena, sizeof(VkImage) * swapchain_images_size, 4);
+		swapchain_images = lll_arena_alloc(&permenant_arena, sizeof(VkImage) * swapchain_images_size, 8);
 		vkGetSwapchainImagesKHR(globals.logical_device, globals.swapchain, &swapchain_images_size, swapchain_images);
 		swapchain_image_format = surface_format.format;
 		swapchain_extent = extent;
 	}
 	(void) swapchain_image_format;
 	(void) swapchain_extent;
+	// Note: create image view
+	{
+		globals.swapchain_image_views = lll_arena_alloc(&permenant_arena, sizeof(VkImageView) * swapchain_images_size, 8);
+		globals.swapchain_image_view_size = swapchain_images_size;
+		VkImageViewCreateInfo create_info_common = {0};
+		create_info_common.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		create_info_common.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		create_info_common.format = swapchain_image_format;
+		create_info_common.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info_common.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info_common.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info_common.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info_common.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		create_info_common.subresourceRange.baseMipLevel = 0;
+		create_info_common.subresourceRange.levelCount = 1;
+		create_info_common.subresourceRange.baseArrayLayer = 0;
+		create_info_common.subresourceRange.layerCount = 1;
+		for (lll_u32 i = 0; i < globals.swapchain_image_view_size; i++)
+		{
+			VkImageViewCreateInfo create_info = create_info_common;
+			create_info.image = swapchain_images[i];
+			VkResult res = vkCreateImageView(globals.logical_device, &create_info, NULL, globals.swapchain_image_views + i);
+			if (res != VK_SUCCESS)
+			{
+				LLL_PRINT_ERROR("Error: Failed to create image views\n");
+				vk_cleanup(&globals);
+				return 1;
+			}
+		}
+		lll_printf("Info: Create %u swapchain image views\n", globals.swapchain_image_view_size);
+	}
 
 	while(!glfwWindowShouldClose(globals.window))
 	{
