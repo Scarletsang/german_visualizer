@@ -9,6 +9,7 @@
 
 typedef unsigned int  lll_u32;
 typedef int           lll_i32;
+typedef unsigned int  lll_b32;
 typedef float					lll_f32;
 typedef char          lll_i8;
 typedef unsigned char lll_b8;
