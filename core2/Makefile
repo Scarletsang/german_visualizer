@@ -6,6 +6,10 @@ TARGET=core2
 SRC:= main.c
 OBJ:= $(SRC:.c=.o)
 
+SHADER_CC= glslc
+SHADER_SRC := shaders/frag.glsl shaders/vert.glsl
+SHADER_OBJ := $(SHADER_SRC:.glsl=.spv)
+
 ifdef DEBUG
 CFLAGS += -DDEBUG -g
 LDFLAGS += -DDEBUG -g
@@ -25,15 +29,21 @@ endif
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ) lalala.h
+$(TARGET): $(OBJ) $(SHADER_OBJ) lalala.h
 ifeq ($(UNAME),Darwin)
 	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS) && install_name_tool -add_rpath /usr/local/lib ./$(TARGET) && echo "Compilation successful"
 else
 	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS) && echo "Compilation successful"
 endif
 
+%vert.spv: %vert.glsl
+	$(SHADER_CC) -fshader-stage=vertex $< -o $@
+
+%frag.spv: %frag.glsl
+	$(SHADER_CC) -fshader-stage=fragment $< -o $@
+
 clean:
-	@rm -f $(OBJ)
+	@rm -f $(OBJ) $(SHADER_OBJ)
 
 fclean: clean
 	@rm -f $(NAME)

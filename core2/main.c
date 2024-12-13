@@ -8,6 +8,8 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include <GLFW/glfw3native.h>
 
+#include <sys/stat.h>
+
 enum glass_block_size_measure_method
 {
 	SIZE_FIT_CHILDREN, // Note: No Paramter
@@ -120,6 +122,22 @@ struct glass_block
 #endif
 static char*  validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 static char*  required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+lll_string   read_entire_file(char* filename)
+{
+	char* file_data = 0;
+	unsigned long	file_size = 0;
+	int input_file_fd = open(filename, O_RDONLY);
+	if (input_file_fd >= 0)
+	{
+		struct stat input_file_stat = {0};
+		stat(filename, &input_file_stat);
+		file_size = input_file_stat.st_size;
+		file_data = mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, input_file_fd, 0);
+		close(input_file_fd);
+	}
+	return (lll_string){file_data, file_size};
+}
 
 lll_b8	vk_check_validation_layer_support(lll_arena* arena)
 {
@@ -691,6 +709,62 @@ int main(void)
 			}
 		}
 		lll_printf("Info: Create %u swapchain image views\n", globals.swapchain_image_view_size);
+	}
+	// Note: Load shader binary
+	{
+		lll_string shader_vertex   = read_entire_file("./shaders/vert.spv");
+		lll_string shader_fragment = read_entire_file("./shaders/frag.spv");
+		VkShaderModule shader_module_vertex = VK_NULL_HANDLE;
+		{
+			VkShaderModuleCreateInfo create_info = {0};
+			create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			create_info.codeSize = shader_vertex.length;
+			create_info.pCode = (lll_u32*) shader_vertex.data;
+			VkResult res = vkCreateShaderModule(globals.logical_device, &create_info, NULL, &shader_module_vertex);
+			if (res != VK_SUCCESS)
+			{
+				LLL_PRINT_ERROR("Error: Failed to create shader module for vertex shader\n");
+				vk_cleanup(&globals);
+				return 1;
+			}
+		}
+		VkShaderModule shader_module_fragment = VK_NULL_HANDLE;
+		{
+			VkShaderModuleCreateInfo createInfo = {0};
+			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			createInfo.codeSize = shader_fragment.length;
+			createInfo.pCode = (lll_u32*) shader_fragment.data;
+			VkResult res = vkCreateShaderModule(globals.logical_device, &createInfo, NULL, &shader_module_fragment);
+			if (res != VK_SUCCESS)
+			{
+				LLL_PRINT_ERROR("Error: Failed to create shader module for fragment shader\n");
+				vk_cleanup(&globals);
+				return 1;
+			}
+		}
+
+		VkPipelineShaderStageCreateInfo	shader_stages[2] = {0};
+		{
+			VkPipelineShaderStageCreateInfo shader_stage_info_vertex = {0};
+			shader_stage_info_vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shader_stage_info_vertex.stage = VK_SHADER_STAGE_VERTEX_BIT;
+			shader_stage_info_vertex.module = shader_module_vertex;
+			shader_stage_info_vertex.pName = "main";
+
+			VkPipelineShaderStageCreateInfo shader_stage_info_fragment = {0};
+			shader_stage_info_fragment.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shader_stage_info_fragment.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			shader_stage_info_fragment.module = shader_module_fragment;
+			shader_stage_info_fragment.pName = "main";
+
+			shader_stages[0] = shader_stage_info_vertex;
+			shader_stages[1] = shader_stage_info_fragment;
+		}
+
+		vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
+		vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
+		munmap(shader_vertex.data, shader_vertex.length);
+		munmap(shader_fragment.data, shader_fragment.length);
 	}
 
 	while(!glfwWindowShouldClose(globals.window))
