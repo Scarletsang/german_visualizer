@@ -171,10 +171,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL vk_debug_callback(VkDebugUtilsMessageSever
 struct vk_queue_family_indices
 {
 	lll_b8   is_valid_graphics_family : 1;
-	lll_u32  graphics_family_index;
+	lll_b8   is_valid_present_family : 1;
+	union
+	{
+		struct
+		{
+			lll_u32  graphics_family_index;
+			lll_u32  present_family_index;
+		};
+		lll_u32	family_indices[2];
+	};
 };
 
-struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, lll_arena* arena)
+struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface, lll_arena* arena)
 {
 	struct vk_queue_family_indices indices = {0};
 	lll_u32  queue_family_count = 0;
@@ -191,6 +200,16 @@ struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, l
 			{
 				indices.is_valid_graphics_family = LLL_TRUE;
 				indices.graphics_family_index = i;
+			}
+			lll_b32 has_present_support = LLL_FALSE;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &has_present_support);
+			if (has_present_support)
+			{
+				indices.is_valid_present_family = LLL_TRUE;
+				indices.present_family_index = i;
+			}
+			if (indices.is_valid_graphics_family && indices.is_valid_present_family)
+			{
 				break;
 			}
 			queue_family++;
@@ -383,7 +402,7 @@ int main(void)
 			// 	{
 			// 		is_suitable = LLL_TRUE;
 			// 	}
-			queue_family_indices = vk_find_queue_families(*devices, &temp_arena);
+			queue_family_indices = vk_find_queue_families(*devices, globals.surface, &temp_arena);
 			if (queue_family_indices.is_valid_graphics_family == LLL_TRUE)
 			{
 				is_suitable = LLL_TRUE;
@@ -407,18 +426,30 @@ int main(void)
 	globals.logical_device = VK_NULL_HANDLE;
 	{
 		lll_assert(queue_family_indices.is_valid_graphics_family == LLL_TRUE, "graphics queue family index is not valid");
-		VkDeviceQueueCreateInfo queue_create_info = {0};
-		queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queue_create_info.queueFamilyIndex = queue_family_indices.graphics_family_index;
 		lll_f32 queue_priority = 1.0f;
-		queue_create_info.pQueuePriorities = &queue_priority;
-		queue_create_info.queueCount = 1;
+		VkDeviceQueueCreateInfo	create_infos[2];
+		lll_u32 create_infos_size = 2;
+		lll_assert(queue_family_indices.is_valid_graphics_family == LLL_TRUE, "Graphics queue family is not valid");
+		lll_assert(queue_family_indices.is_valid_present_family == LLL_TRUE, "Present queue family is not valid");
+		if (queue_family_indices.present_family_index == queue_family_indices.graphics_family_index)
+		{
+			create_infos_size = 1;
+		}
+		for (lll_u32 i = 0; i < create_infos_size; i++)
+		{
+			VkDeviceQueueCreateInfo queue_create_info = {0};
+			queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queue_create_info.queueFamilyIndex = queue_family_indices.family_indices[i];
+			queue_create_info.queueCount = 1;
+			queue_create_info.pQueuePriorities = &queue_priority;
+			create_infos[i] = queue_create_info;
+		}
 
 		VkPhysicalDeviceFeatures device_features = {0};
 		VkDeviceCreateInfo  create_info = {0};
 		create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		create_info.pQueueCreateInfos = &queue_create_info;
-		create_info.queueCreateInfoCount = 1;
+		create_info.pQueueCreateInfos = create_infos;
+		create_info.queueCreateInfoCount = create_infos_size;
 		create_info.pEnabledFeatures = &device_features;
 		create_info.enabledExtensionCount = 0;
 
@@ -445,6 +476,10 @@ int main(void)
 	VkQueue graphics_queue;
 	{
 		vkGetDeviceQueue(globals.logical_device, queue_family_indices.graphics_family_index, 0, &graphics_queue);
+	}
+	VkQueue present_queue;
+	{
+		vkGetDeviceQueue(globals.logical_device, queue_family_indices.present_family_index, 0, &present_queue);
 	}
 
 	while(!glfwWindowShouldClose(globals.window))
