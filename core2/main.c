@@ -260,10 +260,15 @@ struct vk_globals
 	VkDebugUtilsMessengerEXT debug_messenger;
 	VkSurfaceKHR             surface;
 	VkDevice                 logical_device;
+	VkSwapchainKHR           swapchain;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	if (globals->swapchain != VK_NULL_HANDLE)
+	{
+		vkDestroySwapchainKHR(globals->logical_device, globals->swapchain, NULL);
+	}
 	if (globals->logical_device != VK_NULL_HANDLE)
 	{
 		vkDestroyDevice(globals->logical_device, NULL);
@@ -554,6 +559,101 @@ int main(void)
 	{
 		vkGetDeviceQueue(globals.logical_device, queue_family_indices.present_family_index, 0, &present_queue);
 	}
+	// Note: create swapchains
+	globals.swapchain = VK_NULL_HANDLE;
+	VkImage*   swapchain_images = NULL;
+	lll_u32    swapchain_images_size = 0;
+	VkFormat   swapchain_image_format = {0};
+	VkExtent2D swapchain_extent = {0};
+	{
+		struct vk_swapchain_support_details swapchain_details = {0};
+		vk_query_swapchain_support(physical_device, globals.surface, &swapchain_details, &temp_arena);
+		// Note: choose swapchain surface format
+		VkSurfaceFormatKHR surface_format = swapchain_details.formats[0];
+		{
+			VkSurfaceFormatKHR* current = swapchain_details.formats;
+			for (lll_u32 i = 0; i < swapchain_details.formats_size; i++)
+			{
+				if ((current->format == VK_FORMAT_B8G8R8A8_SRGB) && (current->colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR))
+				{
+					surface_format = *current;
+				}
+				current++;
+			}
+		}
+		// Note: choose swapchain present mode
+		VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
+		{
+			VkPresentModeKHR* current = swapchain_details.present_modes;
+			for (lll_u32 i = 0; i < swapchain_details.present_modes_size; i++)
+			{
+				if (*current == VK_PRESENT_MODE_MAILBOX_KHR)
+				{
+					present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+				}
+				current++;
+			}
+		}
+		// Note: choose swapchain resolution
+		VkExtent2D extent = swapchain_details.capabilities.currentExtent;
+		if (swapchain_details.capabilities.currentExtent.width == LLL_INVALID_SIZE)
+		{
+			lll_i32 width, height;
+			glfwGetFramebufferSize(globals.window, &width, &height);
+			VkExtent2D actual_extent = {(lll_u32) width, (lll_u32) height};
+			actual_extent.width = lll_math_u32_clamp(actual_extent.width, swapchain_details.capabilities.minImageExtent.width, swapchain_details.capabilities.maxImageExtent.width);
+			actual_extent.height = lll_math_u32_clamp(actual_extent.height, swapchain_details.capabilities.minImageExtent.height, swapchain_details.capabilities.maxImageExtent.height);
+			extent = actual_extent;
+		}
+
+		VkSwapchainCreateInfoKHR create_info = {0};
+		create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		create_info.surface = globals.surface;
+		lll_u32 image_count = swapchain_details.capabilities.minImageCount + 1;
+		if ((swapchain_details.capabilities.maxImageCount > 0) && (image_count > swapchain_details.capabilities.maxImageCount))
+		{
+			image_count = swapchain_details.capabilities.maxImageCount;
+		}
+		create_info.minImageCount = image_count;
+		create_info.imageFormat = surface_format.format;
+		create_info.imageColorSpace = surface_format.colorSpace;
+		create_info.imageExtent = extent;
+		create_info.imageArrayLayers = 1;
+		create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		if (queue_family_indices.graphics_family_index != queue_family_indices.present_family_index)
+		{
+			create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+			create_info.queueFamilyIndexCount = 2;
+			create_info.pQueueFamilyIndices = queue_family_indices.family_indices;
+		}
+		else
+		{
+			create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			create_info.queueFamilyIndexCount = 0; // Optional
+			create_info.pQueueFamilyIndices = NULL; // Optional
+		}
+		create_info.preTransform = swapchain_details.capabilities.currentTransform;
+		create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		create_info.presentMode = present_mode;
+		create_info.clipped = VK_TRUE;
+		create_info.oldSwapchain = VK_NULL_HANDLE;
+		VkResult res = vkCreateSwapchainKHR(globals.logical_device, &create_info, NULL, &globals.swapchain);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create swap chain\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
+		lll_arena_clear(&temp_arena);
+		vkGetSwapchainImagesKHR(globals.logical_device, globals.swapchain, &swapchain_images_size, NULL);
+		// TODO: move this to a different arena
+		swapchain_images = lll_arena_alloc(&temp_arena, sizeof(VkImage) * swapchain_images_size, 4);
+		vkGetSwapchainImagesKHR(globals.logical_device, globals.swapchain, &swapchain_images_size, swapchain_images);
+		swapchain_image_format = surface_format.format;
+		swapchain_extent = extent;
+	}
+	(void) swapchain_image_format;
+	(void) swapchain_extent;
 
 	while(!glfwWindowShouldClose(globals.window))
 	{

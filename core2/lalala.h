@@ -96,6 +96,7 @@ void**	lll_ht_get(lll_ht* hashtable, lll_u32 key);
 void		lll_ht_clear(lll_ht* hashtable);
 lll_u32	lll_hash_string(lll_string string);
 
+lll_u32 lll_math_u32_clamp(lll_u32 number, lll_u32 min, lll_u32 max);
 #endif
 
 #ifdef LALALA_IMPLEMENTATION
@@ -866,5 +867,18 @@ lll_u32	lll_hash_string(lll_string string)
 		string.data++;
 	}
 	return seed;
+}
+
+lll_u32 lll_math_u32_clamp(lll_u32 number, lll_u32 min, lll_u32 max)
+{
+	if (number < min)
+	{
+		number = min;
+	}
+	if (number > max)
+	{
+		number = max;
+	}
+	return number;
 }
 #endif
