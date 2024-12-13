@@ -8,8 +8,6 @@
 #define GLFW_EXPOSE_NATIVE_COCOA
 #include <GLFW/glfw3native.h>
 
-#include <vulkan/vulkan_metal.h>
-
 enum glass_block_size_measure_method
 {
 	SIZE_FIT_CHILDREN, // Note: No Paramter
@@ -221,6 +219,40 @@ struct vk_queue_family_indices vk_find_queue_families(VkPhysicalDevice device, V
 	return indices;
 }
 
+struct vk_swapchain_support_details
+{
+	VkSurfaceCapabilitiesKHR  capabilities;
+	VkSurfaceFormatKHR*       formats;
+	VkPresentModeKHR*         present_modes;
+	lll_u32                   formats_size;
+	lll_u32                   present_modes_size;
+};
+
+void	vk_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR surface, struct vk_swapchain_support_details* details, lll_arena* arena)
+{
+	struct vk_swapchain_support_details result = {0};
+	lll_assert(device != VK_NULL_HANDLE, "Physical device is not valid");
+	lll_assert(surface != VK_NULL_HANDLE, "Surface is not valid");
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &result.capabilities);
+	lll_u32  format_count = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, NULL);
+	if (format_count > 0)
+	{
+		result.formats = lll_arena_alloc(arena, sizeof(VkSurfaceFormatKHR) * format_count, 4);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, result.formats);
+		result.formats_size = format_count;
+	}
+	lll_u32  present_modes_count = 0;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_modes_count, NULL);
+	if (present_modes_count > 0)
+	{
+		result.present_modes = lll_arena_alloc(arena, sizeof(VkPresentModeKHR) * present_modes_count, 4);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_modes_count, result.present_modes);
+		result.present_modes_size = present_modes_count;
+	}
+	*details = result;
+}
+
 struct vk_globals
 {
 	GLFWwindow*              window;
@@ -366,10 +398,7 @@ int main(void)
 	// Note: Create a surface
 	globals.surface = VK_NULL_HANDLE;
 	{
-		VkMetalSurfaceCreateInfoEXT create_info = {0};
-		create_info.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
-		create_info.pLayer = glfwGetCocoaWindow(globals.window);
-		VkResult res = vkCreateMetalSurfaceEXT(globals.instance, &create_info, NULL, &globals.surface);
+		VkResult res = glfwCreateWindowSurface(globals.instance, globals.window, NULL, &globals.surface);
 		if (res != VK_SUCCESS)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create window surface\n");
@@ -407,6 +436,11 @@ int main(void)
 			queue_family_indices = vk_find_queue_families(*devices, globals.surface, &temp_arena);
 			if (queue_family_indices.is_valid_graphics_family == LLL_TRUE)
 			{
+				is_suitable = LLL_TRUE;
+			}
+			if (is_suitable)
+			{
+				is_suitable = LLL_FALSE;
 				// Note: Check if device support extensions
 				lll_u32  extension_count = 0;
 				vkEnumerateDeviceExtensionProperties(*devices, NULL, &extension_count, NULL);
@@ -429,6 +463,19 @@ int main(void)
 						}
 						current_as_string = (lll_string) {*current, lll_strlen(*current)};
 					}
+				}
+				lll_arena_rollback(&temp_arena, snapshot);
+			}
+			if (is_suitable)
+			{
+				is_suitable = LLL_FALSE;
+				// Note: Check if swap chain has at least one supported format and present mode
+				struct vk_swapchain_support_details details = {0};
+				lll_arena_snapshot snapshot = lll_arena_cheese(&temp_arena);
+				vk_query_swapchain_support(*devices, globals.surface, &details, &temp_arena);
+				if ((details.formats_size > 0) && (details.present_modes_size > 0))
+				{
+					is_suitable = LLL_TRUE;
 				}
 				lll_arena_rollback(&temp_arena, snapshot);
 			}
