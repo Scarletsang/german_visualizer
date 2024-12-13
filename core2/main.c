@@ -281,10 +281,12 @@ struct vk_globals
 	VkSwapchainKHR           swapchain;
 	VkImageView*             swapchain_image_views;
 	lll_u32                  swapchain_image_view_size;
+	VkPipelineLayout         pipeline_layout;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	vkDestroyPipelineLayout(globals->logical_device, globals->pipeline_layout, NULL);
 	for (lll_u32 i = 0; i < globals->swapchain_image_view_size; i++)
 	{
 		vkDestroyImageView(globals->logical_device, globals->swapchain_image_views[i], NULL);
@@ -710,7 +712,8 @@ int main(void)
 		}
 		lll_printf("Info: Create %u swapchain image views\n", globals.swapchain_image_view_size);
 	}
-	// Note: Load shader binary
+	// Note: create Pipeline
+	globals.pipeline_layout = VK_NULL_HANDLE;
 	{
 		lll_string shader_vertex   = read_entire_file("./shaders/vert.spv");
 		lll_string shader_fragment = read_entire_file("./shaders/frag.spv");
@@ -759,6 +762,21 @@ int main(void)
 
 			shader_stages[0] = shader_stage_info_vertex;
 			shader_stages[1] = shader_stage_info_fragment;
+		}
+
+		VkPipelineLayoutCreateInfo pipeline_layout_info = {0};
+		pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_info.setLayoutCount = 0;
+		pipeline_layout_info.pushConstantRangeCount = 0;
+
+		VkResult res = vkCreatePipelineLayout(globals.logical_device, &pipeline_layout_info, NULL, &globals.pipeline_layout);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create shader module for fragment shader\n");
+			vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
+			vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
+			vk_cleanup(&globals);
+			return 1;
 		}
 
 		vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
