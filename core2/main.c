@@ -113,6 +113,51 @@ struct glass_block
 	struct glass_block_border   border;
 };
 
+#ifdef NDEBUG
+    const lll_b8 enable_validation_layers = LLL_FALSE;
+#else
+    const lll_b8 enable_validation_layers = LLL_TRUE;
+#endif
+static char*  validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+
+lll_b8	check_vk_validation_layer_support(lll_arena* arena)
+{
+	lll_u32 layer_count;
+	lll_b8 layer_found = LLL_FALSE;
+	vkEnumerateInstanceLayerProperties(&layer_count, NULL);
+	if (layer_count > 0)
+	{
+		layer_found = LLL_TRUE;
+		lll_arena_snapshot  snapshot = lll_arena_cheese(arena);
+		VkLayerProperties* avaliable_layers = lll_arena_alloc(arena, sizeof(VkLayerProperties) * layer_count, 4);
+		vkEnumerateInstanceLayerProperties(&layer_count, avaliable_layers);
+		char** validation_layer = validation_layers;
+		for (lll_u32 i = 0; i < (sizeof(validation_layers) / sizeof(char*)); i++)
+		{
+			lll_b8 layer_found_here = LLL_TRUE;
+			lll_string validation_layer_name = {*validation_layer, lll_strlen(*validation_layer)};
+			VkLayerProperties* avaliable_layer = avaliable_layers;
+			for (lll_u32 j = 0; j < layer_count; j++)
+			{
+				if (lll_string_is_equal(validation_layer_name, (lll_string) {avaliable_layer->layerName, lll_strlen(avaliable_layer->layerName)}))
+				{
+					layer_found_here = LLL_TRUE;
+					break;
+				}
+				avaliable_layer++;
+			}
+			if (!layer_found_here)
+			{
+				layer_found = LLL_FALSE;
+				break;
+			}
+			validation_layer++;
+		}
+		lll_arena_rollback(arena, snapshot);
+	}
+	return layer_found;
+}
+
 int main(void)
 {
 	lll_arena	temp_arena;
@@ -152,17 +197,41 @@ int main(void)
 		create_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 		create_info.enabledExtensionCount = glfw_extension_count + 1;
 		create_info.ppEnabledExtensionNames = (const char**) required_extensions;
-		create_info.enabledLayerCount = 0;
+
+		// Note: validation layer setup
+		if (enable_validation_layers)
+		{
+			if (!check_vk_validation_layer_support(&temp_arena))
+			{
+				LLL_PRINT_ERROR("Error: Validation layer requested but not avaliable\n");
+				glfwDestroyWindow(window);
+				glfwTerminate();
+				return 1;
+			}
+			else
+			{
+				create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char*);
+				create_info.ppEnabledLayerNames = (const char**) validation_layers;
+			}
+		}
+		else
+		{
+			create_info.enabledLayerCount = 0;
+		}
 
 		VkResult res = vkCreateInstance(&create_info, NULL, &instance);
 		if (res == VK_ERROR_INCOMPATIBLE_DRIVER)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to no found compatible Vulkan ICD\n");
+			glfwDestroyWindow(window);
+			glfwTerminate();
 			return 1;
 		}
 		else if (res)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create Vulkan Instance due to unknown reasons\n");
+			glfwDestroyWindow(window);
+			glfwTerminate();
 			return 1;
 		}
 		lll_arena_clear(&temp_arena);
