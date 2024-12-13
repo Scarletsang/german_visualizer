@@ -336,7 +336,7 @@ int main(void)
 			return 1;
 		}
 		lll_printf("%u physical device avaliable\n", device_count);
-		VkPhysicalDevice* devices = lll_arena_alloc(&temp_arena, device_count, 8);
+		VkPhysicalDevice* devices = lll_arena_alloc(&temp_arena, sizeof(VkPhysicalDevice) * device_count, 8);
 		vkEnumeratePhysicalDevices(instance, &device_count, devices);
 		for (lll_u32 i = 0; i < device_count; i++)
 		{
