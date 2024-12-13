@@ -115,5 +115,19 @@ struct glass_block
 
 int main(void)
 {
-	return 1;
+	glfwInit();
+
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", NULL, NULL);
+
+	lll_u32 extension_count = 0;
+	vkEnumerateInstanceExtensionProperties(NULL, &extension_count, NULL);
+	lll_printf("%u extensions supported\n", extension_count);
+	while(!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
+	}
+	glfwDestroyWindow(window);
+	glfwTerminate();
+	return 0;
 }
