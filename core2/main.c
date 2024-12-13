@@ -283,10 +283,15 @@ struct vk_globals
 	lll_u32                  swapchain_image_view_size;
 	VkRenderPass             render_pass;
 	VkPipelineLayout         pipeline_layout;
+	VkPipeline               pipeline;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	if (globals->pipeline != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(globals->logical_device, globals->pipeline, NULL);
+	}
 	if (globals->pipeline_layout != VK_NULL_HANDLE)
 	{
 		vkDestroyPipelineLayout(globals->logical_device, globals->pipeline_layout, NULL);
@@ -687,7 +692,6 @@ int main(void)
 		swapchain_image_format = surface_format.format;
 		swapchain_extent = extent;
 	}
-	(void) swapchain_image_format;
 	(void) swapchain_extent;
 	// Note: create image view
 	{
@@ -720,7 +724,44 @@ int main(void)
 		}
 		lll_printf("Info: Create %u swapchain image views\n", globals.swapchain_image_view_size);
 	}
-	// Note: create Pipeline
+	// Note: Create render pass
+	globals.render_pass = VK_NULL_HANDLE;
+	{
+		VkAttachmentDescription color_attachment = {0};
+    color_attachment.format = swapchain_image_format;
+    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference color_attachment_ref = {0};;
+		color_attachment_ref.attachment = 0;
+		color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {0};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &color_attachment_ref;
+
+		VkRenderPassCreateInfo render_pass_info = {0};
+		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		render_pass_info.attachmentCount = 1;
+		render_pass_info.pAttachments = &color_attachment;
+		render_pass_info.subpassCount = 1;
+		render_pass_info.pSubpasses = &subpass;
+
+		VkResult res = vkCreateRenderPass(globals.logical_device, &render_pass_info, NULL, &globals.render_pass);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create render pass\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
+	}
+	// Note: create pipeline layout
 	globals.pipeline_layout = VK_NULL_HANDLE;
 	{
 		lll_string shader_vertex   = read_entire_file("./shaders/vert.spv");
@@ -780,55 +821,107 @@ int main(void)
 		VkResult res = vkCreatePipelineLayout(globals.logical_device, &pipeline_layout_info, NULL, &globals.pipeline_layout);
 		if (res != VK_SUCCESS)
 		{
-			LLL_PRINT_ERROR("Error: Failed to create shader module for fragment shader\n");
+			LLL_PRINT_ERROR("Error: Failed to create graphics pipeline layout\n");
 			vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
 			vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
 			vk_cleanup(&globals);
 			return 1;
 		}
 
+		VkDynamicState  dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+		VkPipelineDynamicStateCreateInfo dynamic_state = {0};
+		dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_state.dynamicStateCount = sizeof(dynamic_states) / sizeof(VkDynamicState);
+		dynamic_state.pDynamicStates = dynamic_states;
+
+		// TODO: Actually descript the format of the data
+		VkPipelineVertexInputStateCreateInfo vertex_input_info = {0};
+		vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertex_input_info.vertexBindingDescriptionCount = 0;
+		vertex_input_info.pVertexBindingDescriptions = NULL; // Optional
+		vertex_input_info.vertexAttributeDescriptionCount = 0;
+		vertex_input_info.pVertexAttributeDescriptions = NULL; // Optional
+
+		VkPipelineInputAssemblyStateCreateInfo input_assembly = {0};
+		input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		input_assembly.primitiveRestartEnable = VK_FALSE;
+
+		// VkViewport viewport = {0};
+		// viewport.x = 0.0f;
+		// viewport.y = 0.0f;
+		// viewport.width = (lll_f32) swapchain_extent.width;
+		// viewport.height = (lll_f32) swapchain_extent.height;
+		// viewport.minDepth = 0.0f;
+		// viewport.maxDepth = 1.0f;
+		// VkRect2D scissor = {0};
+		// scissor.offset = (VkOffset2D) {0, 0};
+		// scissor.extent = swapchain_extent;;
+
+		VkPipelineViewportStateCreateInfo viewport_state = {0};
+		viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewport_state.viewportCount = 1;
+		viewport_state.scissorCount = 1;
+
+		VkPipelineRasterizationStateCreateInfo rasterizer = {0};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterizer.lineWidth = 1.0f;
+		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterizer.depthBiasEnable = VK_FALSE;
+		rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+		rasterizer.depthBiasClamp = 0.0f; // Optional
+		rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+
+		VkPipelineMultisampleStateCreateInfo multisampling = {0};
+		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling.sampleShadingEnable = VK_FALSE;
+		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+		VkPipelineColorBlendAttachmentState color_blend_attachment = {0};
+		color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		color_blend_attachment.blendEnable = VK_FALSE;
+
+		VkPipelineColorBlendStateCreateInfo color_blending = {0};
+		color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		color_blending.logicOpEnable = VK_FALSE;
+		color_blending.logicOp = VK_LOGIC_OP_COPY; // Optional
+		color_blending.attachmentCount = 1;
+		color_blending.pAttachments = &color_blend_attachment;
+
+		VkGraphicsPipelineCreateInfo pipeline_info = {0};
+		pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_info.stageCount = 2;
+		pipeline_info.pStages = shader_stages;
+		pipeline_info.pVertexInputState = &vertex_input_info;
+		pipeline_info.pInputAssemblyState = &input_assembly;
+		pipeline_info.pViewportState = &viewport_state;
+		pipeline_info.pRasterizationState = &rasterizer;
+		pipeline_info.pMultisampleState = &multisampling;
+		pipeline_info.pDepthStencilState = NULL; // Optional
+		pipeline_info.pColorBlendState = &color_blending;
+		pipeline_info.pDynamicState = &dynamic_state;
+		pipeline_info.layout = globals.pipeline_layout;
+		pipeline_info.renderPass = globals.render_pass;
+		pipeline_info.subpass = 0;
+		pipeline_info.basePipelineHandle = VK_NULL_HANDLE; // Optional
+		pipeline_info.basePipelineIndex = -1; // Optional
+		res = vkCreateGraphicsPipelines(globals.logical_device, VK_NULL_HANDLE, 1, &pipeline_info, NULL, &globals.pipeline);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to create graphics pipeline\n");
+			vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
+			vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
+			vk_cleanup(&globals);
+			return 1;
+		}
 		vkDestroyShaderModule(globals.logical_device, shader_module_vertex, NULL);
 		vkDestroyShaderModule(globals.logical_device, shader_module_fragment, NULL);
 		munmap(shader_vertex.data, shader_vertex.length);
 		munmap(shader_fragment.data, shader_fragment.length);
-	}
-
-	// Note: Create render pass
-	globals.render_pass = VK_NULL_HANDLE;
-	{
-		VkAttachmentDescription color_attachment = {0};
-    color_attachment.format = swapchain_image_format;
-    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-		VkAttachmentReference color_attachment_ref = {0};;
-		color_attachment_ref.attachment = 0;
-		color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription subpass = {0};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &color_attachment_ref;
-
-		VkRenderPassCreateInfo render_pass_info = {0};
-		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_info.attachmentCount = 1;
-		render_pass_info.pAttachments = &color_attachment;
-		render_pass_info.subpassCount = 1;
-		render_pass_info.pSubpasses = &subpass;
-
-		VkResult res = vkCreateRenderPass(globals.logical_device, &render_pass_info, NULL, &globals.render_pass);
-		if (res != VK_SUCCESS)
-		{
-			LLL_PRINT_ERROR("Error: Failed to create render pass\n");
-			vk_cleanup(&globals);
-			return 1;
-		}
 	}
 
 	while(!glfwWindowShouldClose(globals.window))
