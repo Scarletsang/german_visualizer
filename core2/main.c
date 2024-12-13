@@ -1,3 +1,4 @@
+#include "vulkan/vulkan_core.h"
 #define LALALA_IMPLEMENTATION
 #include "lalala.h"
 
@@ -120,6 +121,7 @@ struct glass_block
     const lll_b8 enable_validation_layers = LLL_TRUE;
 #endif
 static char*  validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+static char*  required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 lll_b8	vk_check_validation_layer_support(lll_arena* arena)
 {
@@ -257,7 +259,7 @@ void vk_cleanup(struct vk_globals* globals)
 int main(void)
 {
 	lll_arena	temp_arena;
-	lll_arena_init(&temp_arena, LLL_PAGE_SIZE);
+	lll_arena_init(&temp_arena, LLL_PAGE_SIZE * 16);
 	struct vk_globals globals = {0};
 	// Note: Create window
 	glfwInit();
@@ -405,7 +407,30 @@ int main(void)
 			queue_family_indices = vk_find_queue_families(*devices, globals.surface, &temp_arena);
 			if (queue_family_indices.is_valid_graphics_family == LLL_TRUE)
 			{
-				is_suitable = LLL_TRUE;
+				// Note: Check if device support extensions
+				lll_u32  extension_count = 0;
+				vkEnumerateDeviceExtensionProperties(*devices, NULL, &extension_count, NULL);
+				lll_arena_snapshot snapshot = lll_arena_cheese(&temp_arena);
+				VkExtensionProperties* extension_properties = lll_arena_alloc(&temp_arena, sizeof(VkExtensionProperties) * extension_count, 4);
+				vkEnumerateDeviceExtensionProperties(*devices, NULL, &extension_count, extension_properties);
+				(void) required_device_extensions;
+				char** current = required_device_extensions;
+				lll_string current_as_string = {*current, lll_strlen(*current)};
+				for (lll_u32 j = 0; j < extension_count; j++)
+				{
+					lll_string name = {extension_properties[j].extensionName, lll_strlen(extension_properties[j].extensionName)};
+					if (lll_string_is_equal(name, current_as_string))
+					{
+						current++;
+						if (current >= required_device_extensions + (sizeof(required_device_extensions) / sizeof(char*)))
+						{
+							is_suitable = LLL_TRUE;
+							break;
+						}
+						current_as_string = (lll_string) {*current, lll_strlen(*current)};
+					}
+				}
+				lll_arena_rollback(&temp_arena, snapshot);
 			}
 			if (is_suitable)
 			{
@@ -451,7 +476,8 @@ int main(void)
 		create_info.pQueueCreateInfos = create_infos;
 		create_info.queueCreateInfoCount = create_infos_size;
 		create_info.pEnabledFeatures = &device_features;
-		create_info.enabledExtensionCount = 0;
+		create_info.ppEnabledExtensionNames = (const char**) required_device_extensions;
+		create_info.enabledExtensionCount = sizeof(required_device_extensions) / sizeof(char*);
 
 		// Note: For backward compatibility only. Validation layer on device is no longer supported
 		if (enable_validation_layers)
