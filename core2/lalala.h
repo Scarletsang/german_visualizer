@@ -10,7 +10,7 @@
 typedef unsigned int  lll_u32;
 typedef int           lll_i32;
 typedef unsigned int  lll_b32;
-typedef float					lll_f32;
+typedef float         lll_f32;
 typedef char          lll_i8;
 typedef unsigned char lll_b8;
 typedef unsigned char lll_u8;
@@ -72,21 +72,21 @@ union lll_ht_entry
 	{
 		void*								data;
 		union lll_ht_entry*	next;
-		lll_u32							hash;
+		lll_u32             hash;
 	};
 	struct
 	{
-		lll_u64							is_occupied;
-		union lll_ht_entry*	next_deleted;
+		lll_u64             is_occupied;
+		union lll_ht_entry* next_deleted;
 	};
 };
 
 typedef struct lll_ht
 {
-	union lll_ht_entry*	entries;
-	union lll_ht_entry*	free_list;
-	lll_u32							capacity;
-	lll_arena						entries_arena;
+	union lll_ht_entry* entries;
+	union lll_ht_entry* free_list;
+	lll_u32             capacity;
+	lll_arena           entries_arena;
 }	lll_ht;
 
 lll_b8	lll_ht_init(lll_ht*	hashtable, lll_u32 capacity, lll_u32 duplicated_capacity);
