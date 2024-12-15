@@ -344,6 +344,57 @@ void vk_cleanup(struct vk_globals* globals)
 	glfwTerminate();
 }
 
+lll_b8  vk_record_command_buffer(struct vk_globals* globals, VkExtent2D swapchain_extent, lll_u32 image_index)
+{
+	VkCommandBufferBeginInfo begin_info = {0};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.flags = 0; // Optional
+	begin_info.pInheritanceInfo = NULL; // Optional
+
+	VkResult res = vkBeginCommandBuffer(globals->command_buffer, &begin_info);
+	if (res != VK_SUCCESS)
+	{
+		LLL_PRINT_ERROR("Error: Failed to begin recording command buffer\n");
+		return LLL_FALSE;
+	}
+	VkRenderPassBeginInfo render_pass_info = {0};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_info.renderPass = globals->render_pass;;
+	render_pass_info.framebuffer = globals->swapchain_framebuffers[image_index];
+	render_pass_info.renderArea.offset = (VkOffset2D) {0, 0};
+	render_pass_info.renderArea.extent = swapchain_extent;
+
+	VkClearValue clear_color = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+	render_pass_info.clearValueCount = 1;
+	render_pass_info.pClearValues = &clear_color;
+	vkCmdBeginRenderPass(globals->command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+	{
+		vkCmdBindPipeline(globals->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, globals->pipeline);
+		VkViewport viewport = {0};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (lll_f32) swapchain_extent.width;
+		viewport.height = (lll_f32) swapchain_extent.height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(globals->command_buffer, 0, 1, &viewport);
+
+		VkRect2D scissor = {0};
+		scissor.offset = (VkOffset2D) {0, 0};
+		scissor.extent = swapchain_extent;
+		vkCmdSetScissor(globals->command_buffer, 0, 1, &scissor);
+		vkCmdDraw(globals->command_buffer, 3, 1, 0, 0);
+	}
+	vkCmdEndRenderPass(globals->command_buffer);
+	res = vkEndCommandBuffer(globals->command_buffer);
+	if (res != VK_SUCCESS)
+	{
+		LLL_PRINT_ERROR("Error: Failed to record command buffer\n");
+		return LLL_FALSE;
+	}
+	return LLL_TRUE;
+}
+
 int main(void)
 {
 	static lll_arena	temp_arena;
