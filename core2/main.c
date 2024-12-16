@@ -288,10 +288,25 @@ struct vk_globals
 	lll_u32                  swapchain_framebuffer_size;
 	VkCommandPool            command_pool;
 	VkCommandBuffer          command_buffer;
+	VkSemaphore              semaphore_image_avaliable;
+	VkSemaphore              semaphore_render_finished;
+	VkFence                  fence_in_flight;
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
+	if (globals->semaphore_image_avaliable != VK_NULL_HANDLE)
+	{
+		vkDestroySemaphore(globals->logical_device, globals->semaphore_image_avaliable, NULL);
+	}
+	if (globals->semaphore_render_finished != VK_NULL_HANDLE)
+	{
+		vkDestroySemaphore(globals->logical_device, globals->semaphore_render_finished, NULL);
+	}
+	if (globals->fence_in_flight != VK_NULL_HANDLE)
+	{
+		vkDestroyFence(globals->logical_device, globals->fence_in_flight, NULL);
+	}
 	if (globals->command_pool != VK_NULL_HANDLE)
 	{
 		vkDestroyCommandPool(globals->logical_device, globals->command_pool, NULL);
@@ -1043,10 +1058,29 @@ int main(void)
 			return 1;
 		}
 	}
+	// Note: Create GPU semaphores
+	{
+		VkSemaphoreCreateInfo  semaphore_create_info = {0};
+		semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkFenceCreateInfo  fence_create_info = {0};
+		fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		VkResult res_1 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, &globals.semaphore_image_avaliable);
+		VkResult res_2 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, &globals.semaphore_render_finished);
+		VkResult res_3 = vkCreateFence(globals.logical_device, &fence_create_info, NULL, &globals.fence_in_flight);
+		if ((res_1 != VK_SUCCESS) || (res_2 != VK_SUCCESS) || (res_3 != VK_SUCCESS))
+		{
+			LLL_PRINT_ERROR("Error: Failed to create semaphores\n");
+			vk_cleanup(&globals);
+			return 1;
+		}
+	}
 
 	while(!glfwWindowShouldClose(globals.window))
 	{
 		glfwPollEvents();
+		vkWaitForFences(globals.logical_device, 1, &globals.fence_in_flight, VK_TRUE, (lll_u64) -1);
+		vkResetFences(globals.logical_device, 1, &globals.fence_in_flight);
 	}
 	vk_cleanup(&globals);
 	return 0;
