@@ -271,6 +271,8 @@ void	vk_query_swapchain_support(VkPhysicalDevice device, VkSurfaceKHR surface, s
 	*details = result;
 }
 
+#define MAX_FRAMES_IN_FLIGHT (2)
+
 struct vk_globals
 {
 	GLFWwindow*              window;
@@ -287,25 +289,34 @@ struct vk_globals
 	VkFramebuffer*           swapchain_framebuffers;
 	lll_u32                  swapchain_framebuffer_size;
 	VkCommandPool            command_pool;
-	VkCommandBuffer          command_buffer;
-	VkSemaphore              semaphore_image_avaliable;
-	VkSemaphore              semaphore_render_finished;
-	VkFence                  fence_in_flight;
+	VkCommandBuffer          command_buffers[MAX_FRAMES_IN_FLIGHT];
+	VkSemaphore              semaphores_image_avaliable[MAX_FRAMES_IN_FLIGHT];
+	VkSemaphore              semaphores_render_finished[MAX_FRAMES_IN_FLIGHT];
+	VkFence                  fences_in_flight[MAX_FRAMES_IN_FLIGHT];
 };
 
 void vk_cleanup(struct vk_globals* globals)
 {
-	if (globals->semaphore_image_avaliable != VK_NULL_HANDLE)
+	for (lll_u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroySemaphore(globals->logical_device, globals->semaphore_image_avaliable, NULL);
+		if (globals->semaphores_image_avaliable[i] != VK_NULL_HANDLE)
+		{
+			vkDestroySemaphore(globals->logical_device, globals->semaphores_image_avaliable[i], NULL);
+		}
 	}
-	if (globals->semaphore_render_finished != VK_NULL_HANDLE)
+	for (lll_u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroySemaphore(globals->logical_device, globals->semaphore_render_finished, NULL);
+		if (globals->semaphores_render_finished[i] != VK_NULL_HANDLE)
+		{
+			vkDestroySemaphore(globals->logical_device, globals->semaphores_render_finished[i], NULL);
+		}
 	}
-	if (globals->fence_in_flight != VK_NULL_HANDLE)
+	for (lll_u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroyFence(globals->logical_device, globals->fence_in_flight, NULL);
+		if (globals->fences_in_flight[i] != VK_NULL_HANDLE)
+		{
+			vkDestroyFence(globals->logical_device, globals->fences_in_flight[i], NULL);
+		}
 	}
 	if (globals->command_pool != VK_NULL_HANDLE)
 	{
@@ -359,14 +370,14 @@ void vk_cleanup(struct vk_globals* globals)
 	glfwTerminate();
 }
 
-lll_b8  vk_record_command_buffer(struct vk_globals* globals, VkExtent2D swapchain_extent, lll_u32 image_index)
+lll_b8  vk_record_command_buffer(VkCommandBuffer command_buffer, struct vk_globals* globals, VkExtent2D swapchain_extent, lll_u32 image_index)
 {
 	VkCommandBufferBeginInfo begin_info = {0};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	begin_info.flags = 0; // Optional
 	begin_info.pInheritanceInfo = NULL; // Optional
 
-	VkResult res = vkBeginCommandBuffer(globals->command_buffer, &begin_info);
+	VkResult res = vkBeginCommandBuffer(command_buffer, &begin_info);
 	if (res != VK_SUCCESS)
 	{
 		LLL_PRINT_ERROR("Error: Failed to begin recording command buffer\n");
@@ -382,9 +393,9 @@ lll_b8  vk_record_command_buffer(struct vk_globals* globals, VkExtent2D swapchai
 	VkClearValue clear_color = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
 	render_pass_info.clearValueCount = 1;
 	render_pass_info.pClearValues = &clear_color;
-	vkCmdBeginRenderPass(globals->command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 	{
-		vkCmdBindPipeline(globals->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, globals->pipeline);
+		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, globals->pipeline);
 		VkViewport viewport = {0};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
@@ -392,16 +403,16 @@ lll_b8  vk_record_command_buffer(struct vk_globals* globals, VkExtent2D swapchai
 		viewport.height = (lll_f32) swapchain_extent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(globals->command_buffer, 0, 1, &viewport);
+		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
 		VkRect2D scissor = {0};
 		scissor.offset = (VkOffset2D) {0, 0};
 		scissor.extent = swapchain_extent;
-		vkCmdSetScissor(globals->command_buffer, 0, 1, &scissor);
-		vkCmdDraw(globals->command_buffer, 3, 1, 0, 0);
+		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+		vkCmdDraw(command_buffer, 3, 1, 0, 0);
 	}
-	vkCmdEndRenderPass(globals->command_buffer);
-	res = vkEndCommandBuffer(globals->command_buffer);
+	vkCmdEndRenderPass(command_buffer);
+	res = vkEndCommandBuffer(command_buffer);
 	if (res != VK_SUCCESS)
 	{
 		LLL_PRINT_ERROR("Error: Failed to record command buffer\n");
@@ -1058,9 +1069,9 @@ int main(void)
 		alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		alloc_info.commandPool = globals.command_pool;
 		alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		alloc_info.commandBufferCount = 1;
+		alloc_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
 
-		VkResult res = vkAllocateCommandBuffers(globals.logical_device, &alloc_info, &globals.command_buffer);
+		VkResult res = vkAllocateCommandBuffers(globals.logical_device, &alloc_info, globals.command_buffers);
 		if (res != VK_SUCCESS)
 		{
 			LLL_PRINT_ERROR("Error: Failed to create command buffer\n");
@@ -1075,42 +1086,46 @@ int main(void)
 		VkFenceCreateInfo  fence_create_info = {0};
 		fence_create_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		fence_create_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		VkResult res_1 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, &globals.semaphore_image_avaliable);
-		VkResult res_2 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, &globals.semaphore_render_finished);
-		VkResult res_3 = vkCreateFence(globals.logical_device, &fence_create_info, NULL, &globals.fence_in_flight);
-		if ((res_1 != VK_SUCCESS) || (res_2 != VK_SUCCESS) || (res_3 != VK_SUCCESS))
+		for (lll_u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 		{
-			LLL_PRINT_ERROR("Error: Failed to create semaphores\n");
-			vk_cleanup(&globals);
-			return 1;
+			VkResult res_1 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, globals.semaphores_image_avaliable + i);
+			VkResult res_2 = vkCreateSemaphore(globals.logical_device, &semaphore_create_info, NULL, globals.semaphores_render_finished + i);
+			VkResult res_3 = vkCreateFence(globals.logical_device, &fence_create_info, NULL, globals.fences_in_flight + i);
+			if ((res_1 != VK_SUCCESS) || (res_2 != VK_SUCCESS) || (res_3 != VK_SUCCESS))
+			{
+				LLL_PRINT_ERROR("Error: Failed to create semaphores\n");
+				vk_cleanup(&globals);
+				return 1;
+			}
 		}
 	}
 
+	lll_u32 current_frame_index = 0;
 	while(!glfwWindowShouldClose(globals.window))
 	{
 		glfwPollEvents();
-		vkWaitForFences(globals.logical_device, 1, &globals.fence_in_flight, VK_TRUE, (lll_u64) -1);
-		vkResetFences(globals.logical_device, 1, &globals.fence_in_flight);
+		vkWaitForFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index, VK_TRUE, (lll_u64) -1);
+		vkResetFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index);
 		lll_u32 image_index;
-		vkAcquireNextImageKHR(globals.logical_device, globals.swapchain, (lll_u64) -1, globals.semaphore_image_avaliable, NULL, &image_index);
-		vkResetCommandBuffer(globals.command_buffer, 0);
-		if (!vk_record_command_buffer(&globals, swapchain_extent, image_index))
+		vkAcquireNextImageKHR(globals.logical_device, globals.swapchain, (lll_u64) -1, globals.semaphores_image_avaliable[current_frame_index], NULL, &image_index);
+		vkResetCommandBuffer(globals.command_buffers[current_frame_index], 0);
+		if (!vk_record_command_buffer(globals.command_buffers[current_frame_index], &globals, swapchain_extent, image_index))
 		{
 			break;
 		}
 		VkSubmitInfo submit_info = {0};
 		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		VkSemaphore wait_semaphores[] = {globals.semaphore_image_avaliable};
+		VkSemaphore wait_semaphores[] = {globals.semaphores_image_avaliable[current_frame_index]};
 		VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 		submit_info.waitSemaphoreCount = 1;
 		submit_info.pWaitSemaphores = wait_semaphores;
 		submit_info.pWaitDstStageMask = wait_stages;
 		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers = &globals.command_buffer;
-		VkSemaphore signal_semaphores[] = {globals.semaphore_render_finished};
+		submit_info.pCommandBuffers = globals.command_buffers + current_frame_index;
+		VkSemaphore signal_semaphores[] = {globals.semaphores_render_finished[current_frame_index]};
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores = signal_semaphores;
-		VkResult res = vkQueueSubmit(graphics_queue, 1, &submit_info, globals.fence_in_flight);
+		VkResult res = vkQueueSubmit(graphics_queue, 1, &submit_info, globals.fences_in_flight[current_frame_index]);
 		if (res != VK_SUCCESS)
 		{
 			LLL_PRINT_ERROR("Error: Failed to submit draw command buffer\n");
@@ -1126,6 +1141,7 @@ int main(void)
 		present_info.pImageIndices = &image_index;
 		present_info.pResults = NULL; // Optional
 		vkQueuePresentKHR(present_queue, &present_info);
+		current_frame_index = (current_frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	vkDeviceWaitIdle(globals.logical_device);
 	vk_cleanup(&globals);
