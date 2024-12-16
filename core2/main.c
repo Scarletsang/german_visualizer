@@ -1081,7 +1081,43 @@ int main(void)
 		glfwPollEvents();
 		vkWaitForFences(globals.logical_device, 1, &globals.fence_in_flight, VK_TRUE, (lll_u64) -1);
 		vkResetFences(globals.logical_device, 1, &globals.fence_in_flight);
+		lll_u32 image_index;
+		vkAcquireNextImageKHR(globals.logical_device, globals.swapchain, (lll_u64) -1, globals.semaphore_image_avaliable, NULL, &image_index);
+		vkResetCommandBuffer(globals.command_buffer, 0);
+		if (!vk_record_command_buffer(&globals, swapchain_extent, image_index))
+		{
+			break;
+		}
+		VkSubmitInfo submit_info = {0};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		VkSemaphore wait_semaphores[] = {globals.semaphore_image_avaliable};
+		VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+		submit_info.waitSemaphoreCount = 1;
+		submit_info.pWaitSemaphores = wait_semaphores;
+		submit_info.pWaitDstStageMask = wait_stages;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &globals.command_buffer;
+		VkSemaphore signal_semaphores[] = {globals.semaphore_render_finished};
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores = signal_semaphores;
+		VkResult res = vkQueueSubmit(graphics_queue, 1, &submit_info, globals.fence_in_flight);
+		if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to submit draw command buffer\n");
+			break;
+		}
+		VkPresentInfoKHR present_info = {0};
+		present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.waitSemaphoreCount = 1;
+		present_info.pWaitSemaphores = signal_semaphores;
+		VkSwapchainKHR swapChains[] = {globals.swapchain};
+		present_info.swapchainCount = 1;
+		present_info.pSwapchains = swapChains;
+		present_info.pImageIndices = &image_index;
+		present_info.pResults = NULL; // Optional
+		vkQueuePresentKHR(present_queue, &present_info);
 	}
+	vkDeviceWaitIdle(globals.logical_device);
 	vk_cleanup(&globals);
 	return 0;
 }
