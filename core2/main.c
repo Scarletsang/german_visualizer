@@ -114,6 +114,17 @@ struct glass_block
 	lll_string                  text;
 	lll_u32                     color_background;
 	struct glass_block_border   border;
+
+struct glass_vertex
+{
+	lll_v2  position;
+	lll_v3  color;
+};
+
+struct glass_vertex  vertices[] = {
+	{{.x =  0.0f, .y = -0.5f}, {.r = 1.0f, .g = 0.0f, .b = 0.0f}},
+	{{.x =  0.5f, .y =  0.5f}, {.r = 0.0f, .g = 1.0f, .b = 0.0f}},
+	{{.x = -0.5f, .y =  0.5f}, {.r = 0.0f, .g = 0.0f, .b = 1.0f}},
 };
 
 #ifdef DEBUG
@@ -785,10 +796,23 @@ lll_b8  vk_create_pipeline(VkDevice logical_device, VkRenderPass render_pass, Vk
 	// TODO: Actually descript the format of the data
 	VkPipelineVertexInputStateCreateInfo vertex_input_info = {0};
 	vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertex_input_info.vertexBindingDescriptionCount = 0;
-	vertex_input_info.pVertexBindingDescriptions = NULL; // Optional
-	vertex_input_info.vertexAttributeDescriptionCount = 0;
-	vertex_input_info.pVertexAttributeDescriptions = NULL; // Optional
+	VkVertexInputBindingDescription  binding_description = {0};
+	binding_description.binding = 0;
+	binding_description.stride = sizeof(struct glass_vertex);
+	binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	vertex_input_info.vertexBindingDescriptionCount = 1;
+	vertex_input_info.pVertexBindingDescriptions = &binding_description;
+	VkVertexInputAttributeDescription  attribute_descriptions[2] = {0};
+	attribute_descriptions[0].binding = 0;
+	attribute_descriptions[0].location = 0;
+	attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+	attribute_descriptions[0].offset = LLL_OFFSET_OF(vertices, position);
+	attribute_descriptions[1].binding = 0;
+	attribute_descriptions[1].location = 1;
+	attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+	attribute_descriptions[1].offset = LLL_OFFSET_OF(vertices, color);
+	vertex_input_info.vertexAttributeDescriptionCount = sizeof(attribute_descriptions) / sizeof(VkVertexInputAttributeDescription);
+	vertex_input_info.pVertexAttributeDescriptions = attribute_descriptions;
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly = {0};
 	input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -947,7 +971,56 @@ lll_b8 vk_create_command_buffers(VkDevice logical_device, VkCommandPool command_
 	return LLL_TRUE;
 }
 
-lll_b8  vk_record_command_buffer(VkCommandBuffer command_buffer, VkRenderPass render_pass, VkFramebuffer framebuffer, VkExtent2D swapchain_extent, VkPipeline pipeline)
+lll_u32  vk_find_memory_type(VkPhysicalDevice physical_device, lll_u32 type_filter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memory_properties;
+	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
+	for (lll_u32 i = 0; i < memory_properties.memoryTypeCount; i++)
+	{
+		if ((type_filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+	lll_assert(FALSE, "Cannot find suitable memory type");
+	return LLL_INVALID_INDEX;
+}
+
+lll_b8 vk_create_vertex_buffer(VkPhysicalDevice physical_device, VkDevice logical_device, VkBuffer* output_buffer_vertex, VkDeviceMemory* output_buffer_vertex_memory)
+{
+	VkBufferCreateInfo buffer_info = {0};
+	buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	buffer_info.size = sizeof(vertices);
+	buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkResult res = vkCreateBuffer(logical_device, &buffer_info, NULL, output_buffer_vertex);
+	if (res != VK_SUCCESS)
+	{
+		LLL_PRINT_ERROR("Error: Failed to create vertex buffer\n");
+		return LLL_FALSE;
+	}
+	VkMemoryRequirements memory_requirements = {0};
+	vkGetBufferMemoryRequirements(logical_device, *output_buffer_vertex, &memory_requirements);
+	VkMemoryAllocateInfo alloc_info = {0};
+	alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	alloc_info.allocationSize = memory_requirements.size;
+	alloc_info.memoryTypeIndex = vk_find_memory_type(physical_device, memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	res = vkAllocateMemory(logical_device, &alloc_info, NULL, output_buffer_vertex_memory);
+	if (res != VK_SUCCESS)
+	{
+		LLL_PRINT_ERROR("Error: Failed to allocate vertex buffer memory\n");
+		return LLL_FALSE;
+	}
+	vkBindBufferMemory(logical_device, *output_buffer_vertex, *output_buffer_vertex_memory, 0);
+	void* data;
+	vkMapMemory(logical_device, *output_buffer_vertex_memory, 0, buffer_info.size, 0, &data);
+	lll_memcpy(data, vertices, buffer_info.size);
+	vkUnmapMemory(logical_device, *output_buffer_vertex_memory);
+	return LLL_TRUE;
+}
+
+lll_b8  vk_record_command_buffer(VkCommandBuffer command_buffer, VkRenderPass render_pass, VkFramebuffer framebuffer, VkExtent2D swapchain_extent, VkPipeline pipeline, VkBuffer vertex_buffer)
 {
 	VkCommandBufferBeginInfo begin_info = {0};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -986,7 +1059,10 @@ lll_b8  vk_record_command_buffer(VkCommandBuffer command_buffer, VkRenderPass re
 		scissor.offset = (VkOffset2D) {0, 0};
 		scissor.extent = swapchain_extent;
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
-		vkCmdDraw(command_buffer, 3, 1, 0, 0);
+		VkBuffer vertex_buffers[] = {vertex_buffer};
+		VkDeviceSize offsets[] = {0};
+		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffers, offsets);
+		vkCmdDraw(command_buffer, sizeof(vertices) / sizeof(struct glass_vertex), 1, 0, 0);
 	}
 	vkCmdEndRenderPass(command_buffer);
 	res = vkEndCommandBuffer(command_buffer);
@@ -1012,6 +1088,8 @@ struct vk_globals
 	VkPipeline                 pipeline;
 	VkFramebuffer*             swapchain_framebuffers;
 	lll_u32                    swapchain_framebuffer_size;
+	VkBuffer                   buffer_vertex;
+	VkDeviceMemory             buffer_vertex_memory;
 	VkCommandPool              command_pool;
 	VkCommandBuffer            command_buffers[MAX_FRAMES_IN_FLIGHT];
 	VkSemaphore                semaphores_image_avaliable[MAX_FRAMES_IN_FLIGHT];
@@ -1076,6 +1154,14 @@ void vk_cleanup(struct vk_globals* globals)
 		{
 			vkDestroyFence(globals->logical_device, globals->fences_in_flight[i], NULL);
 		}
+	}
+	if (globals->buffer_vertex != VK_NULL_HANDLE)
+	{
+		vkDestroyBuffer(globals->logical_device, globals->buffer_vertex, NULL);
+	}
+	if (globals->buffer_vertex_memory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(globals->logical_device, globals->buffer_vertex_memory, NULL);
 	}
 	if (globals->command_pool != VK_NULL_HANDLE)
 	{
@@ -1150,7 +1236,10 @@ int main(void)
 		vk_cleanup(&globals);
 		return 1;
 	}
-	vk_create_debug_messenger(globals.instance, &globals.debug_messenger);
+	if (enable_validation_layers)
+	{
+		vk_create_debug_messenger(globals.instance, &globals.debug_messenger);
+	}
 	// Note: Create a surface
 	{
 		VkResult res = glfwCreateWindowSurface(globals.instance, globals.window, NULL, &globals.surface);
@@ -1183,6 +1272,7 @@ int main(void)
       !vk_create_pipeline(globals.logical_device, globals.render_pass, &globals.pipeline_layout, &globals.pipeline) ||
       !vk_create_framebuffer(globals.logical_device, &globals.swapchain_images, globals.render_pass, &globals.swapchain_framebuffers, &globals.swapchain_framebuffer_size, &swapchain_arena) ||
       !vk_create_command_pool(globals.logical_device, queue_family_indices, &globals.command_pool) ||
+      !vk_create_vertex_buffer(physical_device, globals.logical_device, &globals.buffer_vertex, &globals.buffer_vertex_memory) ||
       !vk_create_command_buffers(globals.logical_device, globals.command_pool, globals.command_buffers) ||
       !vk_create_sync_objects(globals.logical_device, globals.semaphores_image_avaliable, globals.semaphores_render_finished, globals.fences_in_flight))
 	{
@@ -1209,7 +1299,7 @@ int main(void)
 		}
 		vkResetFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index);
 		vkResetCommandBuffer(globals.command_buffers[current_frame_index], 0);
-		if (!vk_record_command_buffer(globals.command_buffers[current_frame_index], globals.render_pass, globals.swapchain_framebuffers[image_index], globals.swapchain_images.extent, globals.pipeline))
+		if (!vk_record_command_buffer(globals.command_buffers[current_frame_index], globals.render_pass, globals.swapchain_framebuffers[image_index], globals.swapchain_images.extent, globals.pipeline, globals.buffer_vertex))
 		{
 			break;
 		}
@@ -1251,6 +1341,23 @@ int main(void)
 			LLL_PRINT_ERROR("Error: Failed to present swap chain image\n");
 			break;
 		}
+		static lll_b8 is_increase = LLL_TRUE;
+		void* data;
+		if ((vertices[0].color.g > 1.0f) || (vertices[0].color.g < 0))
+		{
+			is_increase = !is_increase;
+		}
+		if (is_increase)
+		{
+			vertices[0].color.g += 0.01f;
+		}
+		else
+		{
+			vertices[0].color.g -= 0.01f;
+		}
+		vkMapMemory(globals.logical_device, globals.buffer_vertex_memory, 0, sizeof(vertices), 0, &data);
+		lll_memcpy(data, vertices, sizeof(vertices));
+		vkUnmapMemory(globals.logical_device, globals.buffer_vertex_memory);
 		current_frame_index = (current_frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	vkDeviceWaitIdle(globals.logical_device);
