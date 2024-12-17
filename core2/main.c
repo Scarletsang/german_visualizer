@@ -116,13 +116,21 @@ struct glass_block
 	struct glass_block_border   border;
 };
 
-#ifdef NDEBUG
-    const lll_b8 enable_validation_layers = LLL_FALSE;
-#else
+#ifdef DEBUG
     const lll_b8 enable_validation_layers = LLL_TRUE;
+#else
+    const lll_b8 enable_validation_layers = LLL_FALSE;
 #endif
 static char*  validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 static char*  required_device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+static void vk_framebuffer_resize_callback(GLFWwindow* window, lll_i32 width, lll_i32 height)
+{
+	(void) width;
+	(void) height;
+	lll_b8* is_framebuffer_resized = glfwGetWindowUserPointer(window);
+	*is_framebuffer_resized = LLL_TRUE;
+}
 
 static lll_b8	vk_check_validation_layer_support(lll_arena* arena)
 {
@@ -1011,6 +1019,41 @@ struct vk_globals
 	VkFence                    fences_in_flight[MAX_FRAMES_IN_FLIGHT];
 };
 
+lll_b8  vk_recreate_swapchain(struct vk_globals* globals, VkPhysicalDevice physical_device, struct vk_queue_family_indices queue_family_indices, lll_arena* arena)
+{
+	lll_i32 width, height;
+	glfwGetFramebufferSize(globals->window, &width, &height);
+	while ((width == 0) || (height == 0))
+	{
+		glfwGetFramebufferSize(globals->window, &width, &height);
+		glfwWaitEvents();
+	}
+	vkDeviceWaitIdle(globals->logical_device);
+	// Note: destroy framebuffer, image view and swapchain
+	for (lll_u32 i = 0; i < globals->swapchain_framebuffer_size; i++)
+	{
+		vkDestroyFramebuffer(globals->logical_device, globals->swapchain_framebuffers[i], NULL);
+	}
+	for (lll_u32 i = 0; i < globals->swapchain_images.size; i++)
+	{
+		vkDestroyImageView(globals->logical_device, globals->swapchain_images.views[i], NULL);
+	}
+	vkDestroySwapchainKHR(globals->logical_device, globals->swapchain, NULL);
+	lll_arena_clear(arena);
+	globals->swapchain = (VkSwapchainKHR){0};
+	globals->swapchain_images = (struct vk_swapchain_images){0};
+	globals->swapchain_framebuffers = NULL;
+	globals->swapchain_framebuffer_size = 0;
+
+	if (!vk_create_swapchain(globals->window, globals->surface, physical_device, globals->logical_device, queue_family_indices, &globals->swapchain, &globals->swapchain_images, arena) ||
+      !vk_create_image_view(globals->logical_device, &globals->swapchain_images, arena) ||
+      !vk_create_framebuffer(globals->logical_device, &globals->swapchain_images, globals->render_pass, &globals->swapchain_framebuffers, &globals->swapchain_framebuffer_size, arena))
+	{
+		return LLL_FALSE;
+	}
+	return LLL_TRUE;
+}
+
 void vk_cleanup(struct vk_globals* globals)
 {
 	for (lll_u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -1089,16 +1132,18 @@ void vk_cleanup(struct vk_globals* globals)
 int main(void)
 {
 	static lll_arena	temp_arena;
-	static lll_arena	permenant_arena;
+	static lll_arena	swapchain_arena;
 	lll_arena_init(&temp_arena, LLL_PAGE_SIZE * 16);
-	lll_arena_init(&permenant_arena, LLL_PAGE_SIZE * 16);
+	lll_arena_init(&swapchain_arena, LLL_PAGE_SIZE * 16);
 	struct vk_globals globals = {0};
+	lll_b8            is_framebuffer_resized = LLL_FALSE;
 	// Note: Create window
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		globals.window = glfwCreateWindow(800, 600, "Vulkan window", NULL, NULL);
+		glfwSetWindowUserPointer(globals.window, &is_framebuffer_resized);
+		glfwSetFramebufferSizeCallback(globals.window, &vk_framebuffer_resize_callback);
 	}
 	if (!vk_create_instance(&globals.instance, &temp_arena))
 	{
@@ -1132,14 +1177,14 @@ int main(void)
 	vkGetDeviceQueue(globals.logical_device, queue_family_indices.graphics_family_index, 0, &graphics_queue);
 	VkQueue present_queue;
 	vkGetDeviceQueue(globals.logical_device, queue_family_indices.present_family_index, 0, &present_queue);
-	if (!vk_create_swapchain(globals.window, globals.surface, physical_device, globals.logical_device, queue_family_indices, &globals.swapchain, &globals.swapchain_images, &permenant_arena) ||
-	    !vk_create_image_view(globals.logical_device, &globals.swapchain_images, &permenant_arena) ||
-	    !vk_create_render_pass(globals.logical_device, globals.swapchain_images.format, &globals.render_pass) ||
-	    !vk_create_pipeline(globals.logical_device, globals.render_pass, &globals.pipeline_layout, &globals.pipeline) ||
-	    !vk_create_framebuffer(globals.logical_device, &globals.swapchain_images, globals.render_pass, &globals.swapchain_framebuffers, &globals.swapchain_framebuffer_size, &permenant_arena) ||
-	    !vk_create_command_pool(globals.logical_device, queue_family_indices, &globals.command_pool) ||
-	    !vk_create_command_buffers(globals.logical_device, globals.command_pool, globals.command_buffers) ||
-	    !vk_create_sync_objects(globals.logical_device, globals.semaphores_image_avaliable, globals.semaphores_render_finished, globals.fences_in_flight))
+	if (!vk_create_swapchain(globals.window, globals.surface, physical_device, globals.logical_device, queue_family_indices, &globals.swapchain, &globals.swapchain_images, &swapchain_arena) ||
+      !vk_create_image_view(globals.logical_device, &globals.swapchain_images, &swapchain_arena) ||
+      !vk_create_render_pass(globals.logical_device, globals.swapchain_images.format, &globals.render_pass) ||
+      !vk_create_pipeline(globals.logical_device, globals.render_pass, &globals.pipeline_layout, &globals.pipeline) ||
+      !vk_create_framebuffer(globals.logical_device, &globals.swapchain_images, globals.render_pass, &globals.swapchain_framebuffers, &globals.swapchain_framebuffer_size, &swapchain_arena) ||
+      !vk_create_command_pool(globals.logical_device, queue_family_indices, &globals.command_pool) ||
+      !vk_create_command_buffers(globals.logical_device, globals.command_pool, globals.command_buffers) ||
+      !vk_create_sync_objects(globals.logical_device, globals.semaphores_image_avaliable, globals.semaphores_render_finished, globals.fences_in_flight))
 	{
 		vk_cleanup(&globals);
 		return 1;
@@ -1150,9 +1195,19 @@ int main(void)
 	{
 		glfwPollEvents();
 		vkWaitForFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index, VK_TRUE, (lll_u64) -1);
-		vkResetFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index);
 		lll_u32 image_index;
-		vkAcquireNextImageKHR(globals.logical_device, globals.swapchain, (lll_u64) -1, globals.semaphores_image_avaliable[current_frame_index], NULL, &image_index);
+		VkResult res = vkAcquireNextImageKHR(globals.logical_device, globals.swapchain, (lll_u64) -1, globals.semaphores_image_avaliable[current_frame_index], NULL, &image_index);
+		if (res == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			vk_recreate_swapchain(&globals, physical_device, queue_family_indices, &swapchain_arena);
+			continue;
+		}
+		else if ((res != VK_SUCCESS) && (res != VK_SUBOPTIMAL_KHR))
+		{
+			LLL_PRINT_ERROR("Error: Failed to acquire swap chain image\n");
+			break;
+		}
+		vkResetFences(globals.logical_device, 1, globals.fences_in_flight + current_frame_index);
 		vkResetCommandBuffer(globals.command_buffers[current_frame_index], 0);
 		if (!vk_record_command_buffer(globals.command_buffers[current_frame_index], globals.render_pass, globals.swapchain_framebuffers[image_index], globals.swapchain_images.extent, globals.pipeline))
 		{
@@ -1170,7 +1225,7 @@ int main(void)
 		VkSemaphore signal_semaphores[] = {globals.semaphores_render_finished[current_frame_index]};
 		submit_info.signalSemaphoreCount = 1;
 		submit_info.pSignalSemaphores = signal_semaphores;
-		VkResult res = vkQueueSubmit(graphics_queue, 1, &submit_info, globals.fences_in_flight[current_frame_index]);
+		res = vkQueueSubmit(graphics_queue, 1, &submit_info, globals.fences_in_flight[current_frame_index]);
 		if (res != VK_SUCCESS)
 		{
 			LLL_PRINT_ERROR("Error: Failed to submit draw command buffer\n");
@@ -1185,7 +1240,17 @@ int main(void)
 		present_info.pSwapchains = swap_chains;
 		present_info.pImageIndices = &image_index;
 		present_info.pResults = NULL; // Optional
-		vkQueuePresentKHR(present_queue, &present_info);
+		res = vkQueuePresentKHR(present_queue, &present_info);
+		if ((res == VK_ERROR_OUT_OF_DATE_KHR) || (res == VK_SUBOPTIMAL_KHR) || is_framebuffer_resized)
+		{
+			is_framebuffer_resized = LLL_FALSE;
+			vk_recreate_swapchain(&globals, physical_device, queue_family_indices, &swapchain_arena);
+		}
+		else if (res != VK_SUCCESS)
+		{
+			LLL_PRINT_ERROR("Error: Failed to present swap chain image\n");
+			break;
+		}
 		current_frame_index = (current_frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 	vkDeviceWaitIdle(globals.logical_device);
