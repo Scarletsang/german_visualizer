@@ -26,6 +26,7 @@ void	lll_assert_explicit(lll_b8 check, const char* message, int line_number, con
 #endif
 
 #define LLL_PRINT_ERROR(cstring) (write(2, cstring, sizeof(cstring) - 1))
+#define LLL_OFFSET_OF(data_ptr, field_name) (((lll_u8*)&(data_ptr)->field_name) - (lll_u8*) (data_ptr))
 
 typedef struct
 {
@@ -95,6 +96,60 @@ void*		lll_ht_remove(lll_ht* hashtable, lll_u32 key);
 void**	lll_ht_get(lll_ht* hashtable, lll_u32 key);
 void		lll_ht_clear(lll_ht* hashtable);
 lll_u32	lll_hash_string(lll_string string);
+
+typedef struct
+{
+	lll_u32 x;
+	lll_u32 y;
+} lll_uv2;
+
+typedef struct
+{
+	lll_f32 x;
+	lll_f32 y;
+} lll_v2;
+
+typedef union
+{
+	struct
+	{
+		lll_f32 x;
+		lll_f32 y;
+		lll_f32 z;
+	};
+	struct
+	{
+		lll_f32 r;
+		lll_f32 g;
+		lll_f32 b;
+	};
+	lll_v2    xy;
+} lll_v3;
+
+typedef union
+{
+	struct
+	{
+		lll_f32 x;
+		lll_f32 y;
+		lll_f32 z;
+		lll_f32 w;
+	};
+	struct
+	{
+		lll_f32 r;
+		lll_f32 g;
+		lll_f32 b;
+		lll_f32 a;
+	};
+	struct
+	{
+		lll_v2  xy;
+		lll_v2  zw;
+	};
+	lll_v3    xyz;
+	lll_v3    rgb;
+} lll_v4;
 
 lll_u32 lll_math_u32_clamp(lll_u32 number, lll_u32 min, lll_u32 max);
 #endif
