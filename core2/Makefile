@@ -29,7 +29,7 @@ endif
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ) $(SHADER_OBJ) lalala.h
+$(TARGET): $(OBJ) $(SHADER_OBJ) lalala.h glass.h
 ifeq ($(UNAME),Darwin)
 	$(CC) $(OBJ) -o $(TARGET) $(LDFLAGS) && install_name_tool -add_rpath /usr/local/lib ./$(TARGET) && echo "Compilation successful"
 else
