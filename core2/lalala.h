@@ -91,7 +91,7 @@ typedef struct lll_ht
 	lll_arena           entries_arena;
 }	lll_ht;
 
-lll_b8	lll_ht_init(lll_ht*	hashtable, lll_u32 capacity, lll_u32 duplicated_capacity);
+lll_b8	lll_ht_init(lll_ht*	hashtable, lll_u32 capacity, lll_u32 duplicated_capacity, lll_arena* arena);
 void		lll_ht_set(lll_ht* hashtable, lll_u32 key, void* value);
 void*		lll_ht_remove(lll_ht* hashtable, lll_u32 key);
 void**	lll_ht_get(lll_ht* hashtable, lll_u32 key);
@@ -780,9 +780,19 @@ void	lll_arena_rollback(lll_arena* arena, lll_arena_snapshot snapshot)
 	arena->used = snapshot;
 }
 
-lll_b8	lll_ht_init(lll_ht*	hashtable, lll_u32 capacity, lll_u32 duplicated_capacity)
+lll_b8	lll_ht_init(lll_ht*	hashtable, lll_u32 capacity, lll_u32 duplicated_capacity, lll_arena* arena)
 {
-	lll_b8 result = lll_arena_init(&hashtable->entries_arena, sizeof(union lll_ht_entry) * (capacity + duplicated_capacity));
+	lll_b8 result = LLL_FALSE;
+	lll_u32 size = sizeof(union lll_ht_entry) * (capacity + duplicated_capacity);
+	if (arena)
+	{
+		lll_arena_split(arena, size, &hashtable->entries_arena);
+		result = LLL_TRUE;
+	}
+	else
+	{
+		result = lll_arena_init(&hashtable->entries_arena, size);
+	}
 	hashtable->entries = (union lll_ht_entry*) hashtable->entries_arena.memory;
 	hashtable->free_list = NULL;
 	hashtable->capacity = capacity;
