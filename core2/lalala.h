@@ -156,6 +156,8 @@ lll_u32 lll_math_u32_clamp(lll_u32 number, lll_u32 min, lll_u32 max);
 #endif
 
 #ifdef LALALA_IMPLEMENTATION
+#ifndef _LALALA_IMPLEMENTATION
+#define _LALALA_IMPLEMENTATION
 #include <unistd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -953,4 +955,5 @@ lll_u32 lll_math_u32_clamp(lll_u32 number, lll_u32 min, lll_u32 max)
 	}
 	return number;
 }
+#endif
 #endif
