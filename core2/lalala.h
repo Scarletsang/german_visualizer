@@ -739,7 +739,7 @@ lll_b8	lll_arena_init(lll_arena* arena, lll_u32 size)
 
 void	lll_arena_split(lll_arena* arena, lll_u32 size, lll_arena* output)
 {
-	output->memory = lll_arena_alloc(arena, size, 1);
+	output->memory = lll_arena_alloc(arena, size, 8);
 	output->used = 0;
 	output->capacity = size;
 }
