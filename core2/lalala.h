@@ -7,10 +7,15 @@
 #define LLL_INVALID_SIZE	((lll_u32) -1)
 #define LLL_PAGE_SIZE	(4096)
 
+#define LLL_KB    * (lll_u32)(1024)
+#define LLL_MB    * (lll_u32)(1024 * 1024)
+#define LLL_GB    * (lll_u32)(1024 * 1024 * 1024)
+
 typedef unsigned int  lll_u32;
 typedef int           lll_i32;
 typedef unsigned int  lll_b32;
 typedef float         lll_f32;
+typedef double        lll_f64;
 typedef char          lll_i8;
 typedef unsigned char lll_b8;
 typedef unsigned char lll_u8;
@@ -347,6 +352,69 @@ static lll_u8	lll_sprintf_binary(lll_u64 data, lll_u8 data_size, struct lll_spri
 	return output_size;
 }
 
+static void lll_sprintf_output_i32(lll_i32 number, char* substitution_buffer, lll_u8* substitution_buffer_size)
+{
+	if (number == 0)
+	{
+		substitution_buffer[*substitution_buffer_size] = '0';
+		*substitution_buffer_size += 1;
+	}
+	else
+	{
+		lll_u32 size = 0;
+		lll_i32	temp = number;
+		while (temp != 0)
+		{
+			temp /= 10;
+			(*substitution_buffer_size)++;
+			size++;
+		}
+		temp = number;
+		char*	start = substitution_buffer + *substitution_buffer_size - 1;
+		for (lll_u32 i = 0; i < size; i++)
+		{
+			if (number > 0)
+			{
+				*start = '0' + (temp % 10);
+			}
+			else
+			{
+				*start = '0' + -(temp % 10);
+			}
+			temp /= 10;
+			start--;
+		}
+	}
+}
+
+static void lll_sprintf_output_u32(lll_u32 number, char* substitution_buffer, lll_u8* substitution_buffer_size)
+{
+	if (number == 0)
+	{
+		substitution_buffer[*substitution_buffer_size] = '0';
+		*substitution_buffer_size += 1;
+	}
+	else
+	{
+		lll_u32 size = 0;
+		lll_u32	temp = number;
+		while (temp != 0)
+		{
+			temp /= 10;
+			(*substitution_buffer_size)++;
+			size++;
+		}
+		temp = number;
+		char*	start = substitution_buffer + *substitution_buffer_size - 1;
+		for (lll_u32 i = 0; i < size; i++)
+		{
+			*start = '0' + (temp % 10);
+			temp /= 10;
+			start--;
+		}
+	}
+}
+
 static void	lll_sprintf_output(char** buffer_memory, lll_string* buffer, char* data, lll_u32 data_size)
 {
 	lll_u32	writable_length = buffer->length - (*buffer_memory - buffer->data);
@@ -461,35 +529,7 @@ no_flags:
 				substitution_buffer_size = lll_sprintf_binary(number, sizeof(number), state, substitution_buffer);
 				if (substitution_buffer_size == 0)
 				{
-					if (number == 0)
-					{
-						*substitution_buffer = '0';
-						substitution_buffer_size = 1;
-					}
-					else
-					{
-						lll_i32	temp = number;
-						while (temp != 0)
-						{
-							temp /= 10;
-							substitution_buffer_size++;
-						}
-						temp = number;
-						char*	start = substitution_buffer + substitution_buffer_size - 1;
-						for (int i = substitution_buffer_size - 1; i >= 0; i--)
-						{
-							if (number > 0)
-							{
-								*start = '0' + (temp % 10);
-							}
-							else
-							{
-								*start = '0' + -(temp % 10);
-							}
-							temp /= 10;
-							start--;
-						}
-					}
+					lll_sprintf_output_i32(number, substitution_buffer, &substitution_buffer_size);
 					lll_u32	zero_padding_length = 0;
 					if (state.has_precision && (state.precision > substitution_buffer_size))
 					{
@@ -545,28 +585,7 @@ no_flags:
 				substitution_buffer_size = lll_sprintf_binary(number, sizeof(number), state, substitution_buffer);
 				if (substitution_buffer_size == 0)
 				{
-					if (number == 0)
-					{
-						*substitution_buffer = '0';
-						substitution_buffer_size = 1;
-					}
-					else
-					{
-						lll_u32	temp = number;
-						while (temp != 0)
-						{
-							temp /= 10;
-							substitution_buffer_size++;
-						}
-						temp = number;
-						char*	start = substitution_buffer + substitution_buffer_size - 1;
-						for (int i = substitution_buffer_size - 1; i >= 0; i--)
-						{
-							*start = '0' + (temp % 10);
-							temp /= 10;
-							start--;
-						}
-					}
+					lll_sprintf_output_u32(number, substitution_buffer, &substitution_buffer_size);
 					lll_u32	zero_padding_length = 0;
 					if (state.has_precision && (state.precision > substitution_buffer_size))
 					{
@@ -588,7 +607,97 @@ no_flags:
 						lll_sprintf_output_characters(&buffer_memory, &buffer, ' ', space_padding_length); 
 						lll_sprintf_output_characters(&buffer_memory, &buffer, '0', zero_padding_length); 
 						lll_sprintf_output(&buffer_memory, &buffer, substitution_buffer, substitution_buffer_size);
+					}
+				}
+				else
+				{
+					lll_sprintf_output(&buffer_memory, &buffer, substitution_buffer, substitution_buffer_size);
+				}
+				format++;
+			} break;
+			case 'f':
+			{
+				struct lll_IEEE_binary64
+				{
+					lll_u64 mantissa : 52;
+					lll_i32 exponent : 11;
+					lll_b8  sign : 1;
+				};
+				lll_f64 arg_number = va_arg(args, lll_f64);
+				struct lll_IEEE_binary64 number = *(struct lll_IEEE_binary64*) &arg_number;
+				substitution_buffer_size = lll_sprintf_binary(arg_number, sizeof(arg_number), state, substitution_buffer);
+				if (substitution_buffer_size == 0)
+				{
+					if (number.sign == 1)
+					{
+						*substitution_buffer = '-';
+						substitution_buffer_size++;
+					}
+					if (number.exponent == 0b11111111111)
+					{
+						if (number.mantissa == 0)
+						{
+							lll_memcpy(substitution_buffer + substitution_buffer_size, "Inf", 3);
+							substitution_buffer_size += 3;
+						}
+						else
+						{
+							lll_memcpy(substitution_buffer + substitution_buffer_size, "NaN", 3);
+							substitution_buffer_size += 3;
+						}
+					}
+					else if (number.exponent == 0)
+					{
+						if (number.mantissa == 0)
+						{
+							substitution_buffer[substitution_buffer_size] = '0';
+							substitution_buffer_size++;
+						}
+						else
+						{
+							// TODO: subnormal number
+							number.exponent = -1022;
+							lll_memcpy(substitution_buffer + substitution_buffer_size, "0.", 2);
+							substitution_buffer_size += 2;
+							lll_sprintf_output_u32(number.mantissa, substitution_buffer, &substitution_buffer_size);
+							substitution_buffer[substitution_buffer_size] = 'x';
+							substitution_buffer_size++;
+							lll_sprintf_output_i32(number.exponent, substitution_buffer, &substitution_buffer_size);
+						}
+					}
+					else
+					{
+						// TODO: normal number
+						number.exponent -= 1023;
+						lll_memcpy(substitution_buffer + substitution_buffer_size, "1.", 2);
+						substitution_buffer_size += 2;
+						lll_sprintf_output_u32(number.mantissa, substitution_buffer, &substitution_buffer_size);
+						substitution_buffer[substitution_buffer_size] = 'x';
+						substitution_buffer_size++;
+						lll_sprintf_output_i32(number.exponent, substitution_buffer, &substitution_buffer_size);
+					}
 
+					lll_u32	zero_padding_length = 0;
+					if (state.has_precision && (state.precision > substitution_buffer_size))
+					{
+						zero_padding_length = state.precision - substitution_buffer_size;
+					}
+					lll_u32	space_padding_length = 0;
+					if (state.has_width && (state.width > (substitution_buffer_size + zero_padding_length)))
+					{
+						space_padding_length = state.width - (substitution_buffer_size + zero_padding_length);
+					}
+					if (state.is_left_justify)
+					{
+						lll_sprintf_output_characters(&buffer_memory, &buffer, '0', zero_padding_length); 
+						lll_sprintf_output(&buffer_memory, &buffer, substitution_buffer, substitution_buffer_size);
+						lll_sprintf_output_characters(&buffer_memory, &buffer, ' ', space_padding_length); 
+					}
+					else
+					{
+						lll_sprintf_output_characters(&buffer_memory, &buffer, ' ', space_padding_length); 
+						lll_sprintf_output_characters(&buffer_memory, &buffer, '0', zero_padding_length); 
+						lll_sprintf_output(&buffer_memory, &buffer, substitution_buffer, substitution_buffer_size);
 					}
 				}
 				else
