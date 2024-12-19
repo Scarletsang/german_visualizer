@@ -64,6 +64,7 @@ lll_b8	lll_arena_init(lll_arena* arena, lll_u32 size);
 void	lll_arena_split(lll_arena* arena, lll_u32 size, lll_arena* output);
 void*	lll_arena_alloc(lll_arena* arena, lll_u32 size, lll_u32 alignment);
 void	lll_arena_clear(lll_arena* arena);
+void  lll_arena_destroy(lll_arena* arena);
 lll_arena_snapshot	lll_arena_cheese(lll_arena* arena);
 void	lll_arena_rollback(lll_arena* arena, lll_arena_snapshot snapshot);
 
@@ -761,6 +762,12 @@ void*	lll_arena_alloc(lll_arena* arena, lll_u32 size, lll_u32 alignment)
 void	lll_arena_clear(lll_arena* arena)
 {
 	arena->used = 0;
+}
+
+void  lll_arena_destroy(lll_arena* arena)
+{
+	munmap(arena->memory, arena->capacity);
+	*arena = (lll_arena) {0};
 }
 
 lll_arena_snapshot	lll_arena_cheese(lll_arena* arena)
